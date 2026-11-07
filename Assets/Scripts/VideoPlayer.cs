@@ -36,6 +36,7 @@ namespace Assets.Scripts
         [DllImport("libsmacker")]
         private static extern void GetFrameData(IntPtr smkFileHandle, [In, Out] byte[] buffer, uint bufferSize);
         [DllImport("libsmacker")]
+        [return: MarshalAs(UnmanagedType.I1)] // C++ bool is 1 byte
         private static extern bool AdvanceFrame(IntPtr smkFileHandle);
 
         public RawImage OutputImage;
@@ -75,7 +76,16 @@ namespace Assets.Scripts
                 return;
             }
 
-            LoadVideo(filePath);
+            try
+            {
+                LoadVideo(filePath);
+            }
+            catch (DllNotFoundException)
+            {
+                // Native video plugin not built for this platform yet: skip cutscenes instead of crashing.
+                Debug.LogWarning("libsmacker native plugin missing, skipping video '" + videoName + "'. On macOS run libsmacker/build-macos.sh.");
+                _videoFileHandle = IntPtr.Zero;
+            }
         }
 
         private void LoadVideo(string videoFilePath)
@@ -156,6 +166,11 @@ namespace Assets.Scripts
             {
                 Debug.LogError("Output target texture for video not set.");
                 yield break;
+            }
+
+            if (_videoFileHandle == IntPtr.Zero)
+            {
+                yield break; // video failed to open (or plugin missing), nothing to play
             }
 
             float inverseAspectRatio = (float)_height / _width;

@@ -106,10 +106,10 @@ void* GetAudioData(smk smkFileHandle)
 		{
 			smkAudioData->BitDepth[i] = bitDepth[i];
 			smkAudioData->AudioChannels[i] = audioChannels[i];
-			smkAudioData->AudioRate[i] = audioRate[i];
+			smkAudioData->AudioRate[i] = (uint32_t)audioRate[i];
 			if (smkAudioData->TrackMask & 1 << i)
 			{
-				smkAudioData->AudioDataSize[i] += smk_get_audio_size(smkFileHandle, i);
+				smkAudioData->AudioDataSize[i] += (uint32_t)smk_get_audio_size(smkFileHandle, i);
 			}
 		}
 		smk_next(smkFileHandle);
@@ -126,7 +126,7 @@ void* GetAudioData(smk smkFileHandle)
 
 	// Copy data to buffer.
 	smk_first(smkFileHandle);
-	unsigned long dataIndex = 0;
+	unsigned long dataIndex[MaxAudioTracks] = { 0 }; // one write position per track
 	for (unsigned long frame = 0; frame < frameCount; ++frame)
 	{
 		for (int i = 0; i < MaxAudioTracks; ++i)
@@ -134,8 +134,10 @@ void* GetAudioData(smk smkFileHandle)
 			if (smkAudioData->TrackMask & 1 << i)
 			{
 				const unsigned long sizeThisFrame = smk_get_audio_size(smkFileHandle, i);
-				memcpy_s(smkAudioData->AudioData[i] + dataIndex, sizeThisFrame, smk_get_audio(smkFileHandle, i), sizeThisFrame);
-				dataIndex += sizeThisFrame;
+				if (dataIndex[i] + sizeThisFrame > smkAudioData->AudioDataSize[i])
+					continue; // never write past the buffer
+				memcpy(smkAudioData->AudioData[i] + dataIndex[i], smk_get_audio(smkFileHandle, i), sizeThisFrame);
+				dataIndex[i] += sizeThisFrame;
 			}
 		}
 		smk_next(smkFileHandle);
@@ -159,7 +161,7 @@ void DisposeAudioData(SmkAudioData* audioData)
 	{
 		if (audioData->TrackMask & 1 << i)
 		{
-			delete audioData->AudioData[i];
+			delete[] audioData->AudioData[i];
 		}
 	}
 

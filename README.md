@@ -1,4 +1,4 @@
-# Open76
+﻿# Open76
 
 Open76 is an engine reimplementation of Activision's Interstate '76 on the Unity platform.
 
@@ -46,3 +46,12 @@ Without "That Tony"'s wonderful blog (http://hackingonspace.blogspot.se) and rev
 Licensed under the GPL version 3.
 
 This is in no way affiliated with or endorsed by Activision or any other company.
+
+## macOS (Apple Silicon) notes
+
+This branch removes the Windows only dependencies so the project can run natively on a Mac:
+
+- LZO decompression is now pure C# (`Assets/Scripts/System/Compression/LZO.cs`), verified byte for byte against liblzo2 for LZO1X and LZO1Y. The `lzo2.dll` plugins are gone.
+- Music MP3s load through Unity's built in decoder instead of NAudio (which needed Windows codecs).
+- The cutscene decoder (libsmacker) builds for macOS with `libsmacker/build-macos.sh` (universal arm64 + x86_64). Its Unity interface now uses fixed width types so the C# struct layout matches on every OS. If the native plugin is missing, videos are skipped instead of crashing.
+- Deprecated packages (collab-proxy, ide.vscode, multiplayer-hlapi, xr.legacyinputhelpers) removed so the project opens in Unity 6.

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Assets.Scripts.System.Compression;
-using NAudio.Wave;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Assets.Scripts.System
 {
@@ -126,19 +126,34 @@ namespace Assets.Scripts.System
             }
         }
 
-        internal AudioClip GetMusicClip(int trackNo)
+        // Loads a music track with Unity's built in MP3 decoder (works on Mac, Windows, Linux).
+        // Replaces the old NAudio reader, which relied on Windows codecs.
+        // Run with StartCoroutine or yield return; the clip arrives through onLoaded (null if missing).
+        internal global::System.Collections.IEnumerator LoadMusicClip(int trackNo, Action<AudioClip> onLoaded)
         {
             string filePath = Path.Combine(_game.GamePath, "music", trackNo + ".mp3");
             if (!File.Exists(filePath))
-                return null;
+            {
+                onLoaded(null);
+                yield break;
+            }
 
-            var reader = new AudioFileReader(filePath);
-            var data = new float[reader.Length];
-            reader.Read(data, 0, data.Length);
+            string url = new Uri(Path.GetFullPath(filePath)).AbsoluteUri;
+            using (UnityWebRequest request = UnityWebRequestMultimedia.GetAudioClip(url, AudioType.MPEG))
+            {
+                yield return request.SendWebRequest();
 
-            var audioClip = AudioClip.Create(filePath, data.Length, reader.WaveFormat.Channels, reader.WaveFormat.SampleRate, false);
-            audioClip.SetData(data, 0);
-            return audioClip;
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning("Could not load music track " + filePath + ": " + request.error);
+                    onLoaded(null);
+                    yield break;
+                }
+
+                AudioClip clip = DownloadHandlerAudioClip.GetContent(request);
+                clip.name = filePath;
+                onLoaded(clip);
+            }
         }
 
         public void ExtractAllMW2(string path)

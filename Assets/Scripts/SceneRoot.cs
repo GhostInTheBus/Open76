@@ -46,8 +46,13 @@ namespace Assets.Scripts
             }
 
             var musicAudioSource = GetComponent<AudioSource>();
-            musicAudioSource.clip = VirtualFilesystem.Instance.GetMusicClip(Random.Range(2, 18));
-            musicAudioSource.Play();
+            AudioClip musicClip = null;
+            yield return VirtualFilesystem.Instance.LoadMusicClip(Random.Range(2, 18), clip => musicClip = clip);
+            if (musicClip != null)
+            {
+                musicAudioSource.clip = musicClip;
+                musicAudioSource.Play();
+            }
         }
     }
 }
