@@ -117,12 +117,20 @@ namespace Assets.Scripts
             }
 
             Entry entry;
-            if (!Entries.TryGetValue(source, out entry))
+            if (Entries.TryGetValue(source, out entry))
             {
-                entry = new Entry();
-                Entries[source] = entry;
+                // Already registered: source.volume holds the scaled value, so reading it again as the base would compound the attenuation.
+                if (entry.Category != category)
+                {
+                    entry.Category = category;
+                    source.volume = entry.BaseVolume * Scale(category);
+                }
+
+                return source;
             }
 
+            entry = new Entry();
+            Entries[source] = entry;
             entry.Category = category;
             entry.BaseVolume = source.volume;
             source.volume = entry.BaseVolume * Scale(category);
