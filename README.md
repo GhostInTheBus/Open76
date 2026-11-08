@@ -9,7 +9,7 @@
 ## What works
 - Builds and runs as a native arm64 macOS app, intro cutscene included (a native `libsmacker` plays the Smacker videos).
 - All 40 missions (the training run, M01-M15, S01-S07, T01-T17) load and run through a 25-second random key-mashing stress test with no unhandled exceptions.
-- Driving, weapons fire, the camera views, radio, music and sound effects.
+- Driving, weapons fire, the camera views, music and sound effects.
 - The Esc menu, including Audio Control (music, SFX and voice levels, saved between runs) and Abort Mission, which returns to the main menu.
 
 ## What does not work yet
@@ -18,7 +18,6 @@
 - The HUD (damage, gear, radar, compass, weapons) is painted on the cockpit dashboard, so it only shows in the first-person view (F1). The default third-person view has none. Not verified yet on the Mac build.
 - The car physics are Open76's generic model, not the original game's handling.
 - Many mission script commands are still unimplemented, so some missions will not play through to the end. The first training mission holds input on a scripted camera.
-- Known menu glitches are tracked in the issues of this fork.
 
 ## Run it on a Mac
 1. Get the game data into a folder with `i76.exe`, `I76.ZFS`, `MISSIONS`, `CUTSCENE` and `DATABASE.MW2` (copy them from your discs or a GOG install; `i76.exe` is only checked for, never run).
