@@ -40,7 +40,15 @@ namespace Assets.Scripts
         private void Update()
         {
             _material.mainTextureOffset += Speed * Time.deltaTime;
-            transform.position = CameraManager.Instance.ActiveCamera.transform.position + Vector3.up * Height;
+
+            // Skip a frame instead of throwing every frame if the active camera is ever missing.
+            FSMCamera activeCamera = CameraManager.Instance.ActiveCamera;
+            if (activeCamera == null)
+            {
+                return;
+            }
+
+            transform.position = activeCamera.transform.position + Vector3.up * Height;
         }
     }
 }

@@ -89,7 +89,7 @@ namespace Assets.Scripts.System
                     float secondsElapsed = Time.unscaledTime - fsmRunner.Timers[timerNo.Value];
                     return secondsElapsed >= seconds.Value ? 1 : 0;
                 case "isKeypress":
-                    return Input.GetKeyDown(KeyCode.Space) ? 1 : 0;
+                    return DevInput.GetKeyDown(KeyCode.Space) ? 1 : 0;
                 case "camObjDir":
                     {
                         if (CameraManager.Instance.IsMainCameraActive)

@@ -414,6 +414,12 @@ namespace Assets.Scripts.Entities
             _compassPanel = null;
             RadarPanel = null;
 
+            // If the player is using a wheel or first-person camera, hand the camera back before the wheels are destroyed.
+            if (_camera != null && _camera.transform.IsChildOf(transform))
+            {
+                _camera.DetachFromCar();
+            }
+
             Destroy(transform.Find("FrontLeft").gameObject);
             Destroy(transform.Find("FrontRight").gameObject);
             Destroy(transform.Find("BackLeft").gameObject);

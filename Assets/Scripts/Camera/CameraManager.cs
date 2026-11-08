@@ -94,7 +94,8 @@ namespace Assets.Scripts.Camera
 
         public void PopCamera()
         {
-            if (_cameraStack.Count == 0)
+            // The bottom of the stack is the main camera. A script popping more than it pushed must not destroy it.
+            if (_cameraStack.Count <= 1)
             {
                 return;
             }
@@ -102,11 +103,9 @@ namespace Assets.Scripts.Camera
             var stackCamera = _cameraStack.Pop();
             Object.Destroy(stackCamera.gameObject);
 
-            if (_cameraStack.Count > 0)
-            {
-                var camera = _cameraStack.Peek();
-                camera.gameObject.SetActive(false);
-            }
+            // Bring back the camera underneath. This used to deactivate it, which left a black screen after every cutscene.
+            var camera = _cameraStack.Peek();
+            camera.gameObject.SetActive(true);
         }
 
         public void Destroy()

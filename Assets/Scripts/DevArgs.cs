@@ -16,6 +16,10 @@ namespace Assets.Scripts
         public static bool Drive;
         private static bool _menuTest;
         private static string _shotPath;
+        private static float _chaosSeconds;
+        private static bool _deathCam;
+        private static volatile int _lastFrame;
+        private static float _lastFrameRealtime;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Init()
@@ -31,12 +35,14 @@ namespace Assets.Scripts
                 if (args[i] == "-i76mute") mute = true;
                 else if (args[i] == "-i76drive") Drive = true;
                 else if (args[i] == "-i76menutest") _menuTest = true;
+                else if (args[i] == "-i76deathcam") _deathCam = true;
+                else if (i < args.Length - 1 && args[i] == "-i76chaos") float.TryParse(args[i + 1], out _chaosSeconds);
                 else if (i < args.Length - 1 && args[i] == "-i76mission") mission = args[i + 1];
                 else if (i < args.Length - 1 && args[i] == "-i76screenshot") shot = args[i + 1];
                 else if (i < args.Length - 1 && args[i] == "-i76delay") float.TryParse(args[i + 1], out delay);
             }
 
-            if (mission == null && shot == null && !mute && !Drive && !_menuTest)
+            if (mission == null && shot == null && !mute && !Drive && !_menuTest && _chaosSeconds <= 0f && !_deathCam)
             {
                 return;
             }
@@ -69,6 +75,20 @@ namespace Assets.Scripts
             if (_menuTest)
             {
                 yield return MenuTest();
+            }
+
+            if (_deathCam)
+            {
+                yield return DeathCam();
+            }
+
+            if (_chaosSeconds > 0f)
+            {
+                yield return Chaos(_chaosSeconds);
+                if (shot == null)
+                {
+                    Application.Quit();
+                }
             }
 
             if (shot != null)
@@ -153,6 +173,142 @@ namespace Assets.Scripts
             yield return new WaitForSecondsRealtime(1f);
             Debug.Log("[MenuTest] done, frame=" + Time.frameCount + " timeScale=" + Time.timeScale);
         }
+
+        private static readonly KeyCode[] TapKeys =
+        {
+            KeyCode.Z, KeyCode.E, KeyCode.R, KeyCode.T, KeyCode.Y, KeyCode.Return, KeyCode.S,
+            KeyCode.F1, KeyCode.F2, KeyCode.F3, KeyCode.F4, KeyCode.F5, KeyCode.F6, KeyCode.F7, KeyCode.Space
+        };
+
+        private static readonly KeyCode[] HoldKeys =
+        {
+            KeyCode.Space, KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Alpha4, KeyCode.Alpha5, KeyCode.Alpha6,
+            KeyCode.Alpha7, KeyCode.Alpha8, KeyCode.Keypad2, KeyCode.Keypad4, KeyCode.Keypad6, KeyCode.Keypad8
+        };
+
+        // Random but repeatable key mashing: driving, weapons, cameras, radar, menus.
+        private static IEnumerator Chaos(float seconds)
+        {
+            yield return new WaitForSecondsRealtime(4f);
+            UnityEngine.Random.InitState(1234);
+            DevInput.Injecting = true;
+
+            _lastFrame = Time.frameCount;
+            _lastFrameRealtime = Time.realtimeSinceStartup;
+            global::System.Threading.Timer watchdog = new global::System.Threading.Timer(state =>
+            {
+                if (_lastFrame == lastSeenFrame)
+                {
+                    Debug.Log("[Chaos] FREEZE DETECTED: no new frame for 8 s at frame " + _lastFrame);
+                }
+
+                lastSeenFrame = _lastFrame;
+            }, null, 8000, 8000);
+
+            Assets.Scripts.Menus.MenuController menu = FindFirstObjectByType<Assets.Scripts.Menus.MenuController>();
+            float end = Time.realtimeSinceStartup + seconds;
+            float nextLog = Time.realtimeSinceStartup + 10f;
+            int actions = 0;
+            int menuActions = 0;
+            int startFrame = Time.frameCount;
+            while (Time.realtimeSinceStartup < end)
+            {
+                _lastFrame = Time.frameCount;
+                DevInput.ClearPresses();
+                float r = UnityEngine.Random.value;
+                bool menuOpen = Time.timeScale == 0f && menu != null;
+                if (menuOpen)
+                {
+                    menuActions++;
+                    if (r < 0.75f)
+                    {
+                        UnityEngine.UI.Button[] buttons = menu.GetComponentsInChildren<UnityEngine.UI.Button>();
+                        if (buttons.Length > 0)
+                        {
+                            UnityEngine.UI.Button b = buttons[UnityEngine.Random.Range(0, buttons.Length)];
+                            if (b != null)
+                            {
+                                Debug.Log("[Chaos] menu button " + b.name + " idx=" + b.transform.GetSiblingIndex());
+                                b.onClick.Invoke();
+                                Assets.Scripts.Menus.MenuButtonAdjust adj = b != null ? b.GetComponent<Assets.Scripts.Menus.MenuButtonAdjust>() : null;
+                                if (adj != null && UnityEngine.Random.value < 0.5f) adj.Invoke(UnityEngine.Random.value < 0.5f ? -1 : 1);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("[Chaos] menu key " + (r < 0.9f ? "Escape" : "Left"));
+                        DevInput.PressForOneFrame(r < 0.9f ? KeyCode.Escape : KeyCode.LeftArrow);
+                    }
+                }
+                else if (r < 0.35f)
+                {
+                    float[] v = { 1f, 1f, 1f, 0f, -1f };
+                    DevInput.InjectedVertical = v[UnityEngine.Random.Range(0, v.Length)];
+                    DevInput.InjectedHorizontal = UnityEngine.Random.Range(-1f, 1f);
+                    DevInput.InjectedEBrake = UnityEngine.Random.value < 0.15f;
+                }
+                else if (r < 0.65f)
+                {
+                    KeyCode tap = TapKeys[UnityEngine.Random.Range(0, TapKeys.Length)];
+                    Debug.Log("[Chaos] tap " + tap);
+                    DevInput.PressForOneFrame(tap);
+                }
+                else if (r < 0.85f)
+                {
+                    KeyCode k = HoldKeys[UnityEngine.Random.Range(0, HoldKeys.Length)];
+                    bool on = UnityEngine.Random.value < 0.5f;
+                    Debug.Log("[Chaos] hold " + k + "=" + on);
+                    DevInput.SetHeld(k, on);
+                }
+                else if (r < 0.95f)
+                {
+                    Debug.Log("[Chaos] tap Escape");
+                    DevInput.PressForOneFrame(KeyCode.Escape);
+                }
+                else if (r < 0.96f)
+                {
+                    Debug.Log("[Chaos] tap K (kill)");
+                    DevInput.PressForOneFrame(KeyCode.K);
+                }
+
+                actions++;
+                yield return new WaitForSecondsRealtime(UnityEngine.Random.Range(0.08f, 0.25f));
+                DevInput.ClearPresses();
+
+                if (Time.realtimeSinceStartup > nextLog)
+                {
+                    nextLog = Time.realtimeSinceStartup + 10f;
+                    Debug.Log("[Chaos] t=" + Time.realtimeSinceStartup.ToString("F0") + " actions=" + actions + " menuActions=" + menuActions + " frames=" + (Time.frameCount - startFrame) + " timeScale=" + Time.timeScale);
+                }
+            }
+
+            watchdog.Dispose();
+            DevInput.Injecting = false;
+            DevInput.InjectedVertical = 0f;
+            DevInput.InjectedHorizontal = 0f;
+            DevInput.InjectedEBrake = false;
+            Debug.Log("[Chaos] done actions=" + actions + " menuActions=" + menuActions + " frames=" + (Time.frameCount - startFrame) + " timeScale=" + Time.timeScale);
+        }
+
+        // Wheel camera (F7), then kill the car. The camera used to be destroyed with the wheel.
+        private static IEnumerator DeathCam()
+        {
+            yield return new WaitForSecondsRealtime(4f);
+            DevInput.Injecting = true;
+            DevInput.PressForOneFrame(KeyCode.F7);
+            yield return new WaitForSecondsRealtime(1f);
+            DevInput.ClearPresses();
+            Debug.Log("[DeathCam] wheel camera on, parent=" + (UnityEngine.Camera.main != null && UnityEngine.Camera.main.transform.parent != null ? UnityEngine.Camera.main.transform.parent.name : "none"));
+            DevInput.PressForOneFrame(KeyCode.K);
+            yield return new WaitForSecondsRealtime(1f);
+            DevInput.ClearPresses();
+            yield return new WaitForSecondsRealtime(2f);
+            Debug.Log("[DeathCam] after kill, main camera alive=" + (UnityEngine.Camera.main != null));
+            DevInput.Injecting = false;
+        }
+
+        private static int lastSeenFrame = -1;
 
         private static IEnumerator PressMenuButton(Assets.Scripts.Menus.MenuController menu, string label, bool alsoAdjustDown)
         {

@@ -52,49 +52,49 @@ namespace Assets.Scripts.Camera
                 }
             }
             
-            if (Input.GetKeyDown(KeyCode.F1))
+            if (DevInput.GetKeyDown(KeyCode.F1))
             {
                 SetCameraFirstPersonAtVLOCIndex(0);
                 SetVisibleChassisModel(ChassisView.FirstPerson);
                 FirstPerson = true;
             }
-            else if (Input.GetKeyDown(KeyCode.F2))
+            else if (DevInput.GetKeyDown(KeyCode.F2))
             {
                 SetCameraThirdPerson();
                 FirstPerson = false;
             }
-            else if (Input.GetKeyDown(KeyCode.F3))
+            else if (DevInput.GetKeyDown(KeyCode.F3))
             {
                 SetCameraFirstPersonAtVLOCIndex(1);
                 SetVisibleChassisModel(ChassisView.AllHidden);
                 FirstPerson = false;
             }
-            else if (Input.GetKeyDown(KeyCode.F4))
+            else if (DevInput.GetKeyDown(KeyCode.F4))
             {
                 SetCameraAtWheelIndex(0);
                 SetVisibleChassisModel(ChassisView.ThirdPerson);
                 FirstPerson = false;
             }
-            else if (Input.GetKeyDown(KeyCode.F5))
+            else if (DevInput.GetKeyDown(KeyCode.F5))
             {
                 SetCameraAtWheelIndex(1);
                 SetVisibleChassisModel(ChassisView.ThirdPerson);
                 FirstPerson = false;
             }
-            else if (Input.GetKeyDown(KeyCode.F6))
+            else if (DevInput.GetKeyDown(KeyCode.F6))
             {
                 SetCameraAtWheelIndex(2);
                 SetVisibleChassisModel(ChassisView.ThirdPerson);
                 FirstPerson = false;
             }
-            else if (Input.GetKeyDown(KeyCode.F7))
+            else if (DevInput.GetKeyDown(KeyCode.F7))
             {
                 SetCameraAtWheelIndex(3);
                 SetVisibleChassisModel(ChassisView.ThirdPerson);
                 FirstPerson = false;
             }
 
-            if(Input.GetKeyDown(KeyCode.R))
+            if(DevInput.GetKeyDown(KeyCode.R))
             {
                 // VR only, and it must not break normal play when no headset is present.
                 try
@@ -109,13 +109,13 @@ namespace Assets.Scripts.Camera
             if (FirstPerson)
             {
                 Quaternion targetRotation = Quaternion.Euler(-14, 0, 0);
-                if (Input.GetKey(KeyCode.Keypad6))
+                if (DevInput.GetKey(KeyCode.Keypad6))
                     targetRotation = Quaternion.Euler(-14, 90, 0);
-                else if (Input.GetKey(KeyCode.Keypad2))
+                else if (DevInput.GetKey(KeyCode.Keypad2))
                     targetRotation = Quaternion.Euler(-14, 180, 0);
-                else if (Input.GetKey(KeyCode.Keypad4))
+                else if (DevInput.GetKey(KeyCode.Keypad4))
                     targetRotation = Quaternion.Euler(-14, -90, 0);
-                if (Input.GetKey(KeyCode.Keypad8))
+                if (DevInput.GetKey(KeyCode.Keypad8))
                     targetRotation = Quaternion.Euler(7, 0, 0);
 
                 transform.localRotation = Quaternion.Slerp(transform.localRotation, targetRotation, Time.deltaTime * 6);
@@ -134,6 +134,23 @@ namespace Assets.Scripts.Camera
                 transform.localPosition = target.localPosition;
                 transform.localRotation = Quaternion.Euler(-14, 0, 0);
                 _smoothFollow.enabled = false;
+            }
+        }
+
+        // Wheel and first-person cameras are children of car parts. Call this before those parts are destroyed
+        // (when the car explodes), otherwise the camera is destroyed with them and the screen goes black.
+        public void DetachFromCar()
+        {
+            transform.parent = null;
+            if (_smoothFollow != null)
+            {
+                _smoothFollow.enabled = true;
+            }
+
+            if (_player != null)
+            {
+                SetVisibleChassisModel(ChassisView.ThirdPerson);
+                FirstPerson = false;
             }
         }
 

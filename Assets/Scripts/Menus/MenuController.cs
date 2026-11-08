@@ -27,7 +27,7 @@ namespace Assets.Scripts.Menus
         // Update is called once per frame
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (DevInput.GetKeyDown(KeyCode.Escape))
             {
                 if (_currentMenu != null)
                     _currentMenu.Back();
@@ -40,9 +40,9 @@ namespace Assets.Scripts.Menus
                 MenuButtonAdjust adjust = EventSystem.current.currentSelectedGameObject.GetComponent<MenuButtonAdjust>();
                 if (adjust != null)
                 {
-                    if (Input.GetKeyDown(KeyCode.LeftArrow))
+                    if (DevInput.GetKeyDown(KeyCode.LeftArrow))
                         adjust.Invoke(-1);
-                    else if (Input.GetKeyDown(KeyCode.RightArrow))
+                    else if (DevInput.GetKeyDown(KeyCode.RightArrow))
                         adjust.Invoke(1);
                 }
             }
