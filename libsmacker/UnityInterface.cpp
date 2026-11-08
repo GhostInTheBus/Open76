@@ -1,4 +1,5 @@
 #include "UnityInterface.h"
+#include <cstdio>
 #include <cstdlib>
 #include <string.h>
 
@@ -135,7 +136,12 @@ void* GetAudioData(smk smkFileHandle)
 			{
 				const unsigned long sizeThisFrame = smk_get_audio_size(smkFileHandle, i);
 				if (dataIndex[i] + sizeThisFrame > smkAudioData->AudioDataSize[i])
-					continue; // never write past the buffer
+				{
+					// never write past the buffer, but say so: this truncates the track
+					fprintf(stderr, "libsmacker: audio track %d, frame %lu: chunk of %lu bytes does not fit (%lu of %lu used), skipped\n",
+						i, frame, sizeThisFrame, dataIndex[i], (unsigned long)smkAudioData->AudioDataSize[i]);
+					continue;
+				}
 				memcpy(smkAudioData->AudioData[i] + dataIndex[i], smk_get_audio(smkFileHandle, i), sizeThisFrame);
 				dataIndex[i] += sizeThisFrame;
 			}
@@ -175,5 +181,13 @@ bool AdvanceFrame(smk smkFileHandle)
 		return false;
 	}
 
-	return smk_next(smkFileHandle) != SMK_DONE;
+	const char result = smk_next(smkFileHandle);
+	if (result == SMK_ERROR)
+	{
+		// Stop on a corrupt stream instead of replaying the same frame forever.
+		fprintf(stderr, "libsmacker: smk_next failed, ending playback\n");
+		return false;
+	}
+
+	return result != SMK_DONE;
 }
