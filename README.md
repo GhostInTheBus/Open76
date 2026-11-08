@@ -4,7 +4,9 @@
 
 ![Screenshot](Screenshots/sc1.png)
 
-**[Watch the 40 second promo](media/open76-mac-promo.mp4)** (made from real captures of this build; the music is an original track, not from the game).
+[![Open76 for Mac promo (silent preview, click for the full video with sound)](media/preview.gif)](media/open76-mac-promo.mp4)
+
+*Click the preview for the [40 second promo with sound](media/open76-mac-promo.mp4). Made from real captures of this build; the music is an original track, not from the game.*
 
 **Not affiliated with Activision.** No game data is included. You need your own legal copy of Interstate '76 (the retail discs or a GOG install). The Nitro Pack is not supported.
 
