@@ -11,12 +11,18 @@ namespace Assets.Editor
         public static void Build()
         {
             string output = "Build/Open76.app";
+            bool development = false;
             string[] args = Environment.GetCommandLineArgs();
-            for (int i = 0; i < args.Length - 1; i++)
+            for (int i = 0; i < args.Length; i++)
             {
-                if (args[i] == "-buildOutput")
+                if (args[i] == "-buildOutput" && i < args.Length - 1)
                 {
                     output = args[i + 1];
+                }
+                else if (args[i] == "-devBuild")
+                {
+                    // Development builds keep the -i76 test flags; normal builds ignore them.
+                    development = true;
                 }
             }
 
@@ -29,7 +35,7 @@ namespace Assets.Editor
                 scenes = scenes,
                 locationPathName = output,
                 target = BuildTarget.StandaloneOSX,
-                options = BuildOptions.None
+                options = development ? BuildOptions.Development : BuildOptions.None
             });
 
             Debug.Log("Build result: " + report.summary.result + ", errors: " + report.summary.totalErrors + ", output: " + output);
