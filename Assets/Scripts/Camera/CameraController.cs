@@ -51,7 +51,13 @@ namespace Assets.Scripts.Camera
                     return;
                 }
             }
-            
+
+            // No player car (never set, or destroyed): none of the view keys can work.
+            if (_player == null)
+            {
+                return;
+            }
+
             if (DevInput.GetKeyDown(KeyCode.F1))
             {
                 SetCameraFirstPersonAtVLOCIndex(0);
@@ -128,7 +134,13 @@ namespace Assets.Scripts.Camera
             if(wheelIndex < suspensions.Length)
             {
                 var wheel = suspensions[wheelIndex].transform;
-                var target = wheel.Find("Mesh").GetChild(0);
+                var mesh = wheel.Find("Mesh");
+                if (mesh == null || mesh.childCount == 0)
+                {
+                    return;
+                }
+
+                var target = mesh.GetChild(0);
 
                 transform.parent = wheel;
                 transform.localPosition = target.localPosition;
@@ -193,11 +205,22 @@ namespace Assets.Scripts.Camera
 
         private void SetVisibleChassisModel(ChassisView chassisView)
         {
+            if (_player == null)
+            {
+                return;
+            }
+
             var thirdPerson = _player.transform.Find("Chassis/ThirdPerson");
-            thirdPerson.gameObject.SetActive(chassisView == ChassisView.ThirdPerson);
+            if (thirdPerson != null)
+            {
+                thirdPerson.gameObject.SetActive(chassisView == ChassisView.ThirdPerson);
+            }
 
             var firstPerson = _player.transform.Find("Chassis/FirstPerson");
-            firstPerson.gameObject.SetActive(chassisView == ChassisView.FirstPerson);
+            if (firstPerson != null)
+            {
+                firstPerson.gameObject.SetActive(chassisView == ChassisView.FirstPerson);
+            }
 
             var suspensions = _player.GetComponentsInChildren<RaySusp>();
             foreach (var suspension in suspensions)

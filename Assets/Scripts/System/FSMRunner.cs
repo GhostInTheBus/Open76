@@ -123,7 +123,16 @@ namespace Assets.Scripts.System
                     return StepResult.DoNextMachine;
                 case OpCode.ACTION:
                     string actionName = FSM.ActionTable[byteCode.Value];
-                    machine.ResultReg = _actionDelegator.DoAction(actionName, machine, this);
+                    try
+                    {
+                        machine.ResultReg = _actionDelegator.DoAction(actionName, machine, this);
+                    }
+                    catch (Exception ex)
+                    {
+                        FSMActionDelegator.ReportActionError(actionName, ex);
+                        machine.ResultReg = 0;
+                    }
+
                     machine.ArgumentQueue.Clear();
                     break;
                 case OpCode.NEG:

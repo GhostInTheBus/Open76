@@ -77,6 +77,14 @@ namespace Assets.Scripts.System
             Material roadMaterial = cacheManager.GetTextureMaterial(roadTextureFilename, false);
             meshRenderer.material = roadMaterial;
 
+            // A road needs at least two segments to form a quad; fewer would make a negative-sized index array.
+            if (parsedRoad.RoadSegments.Length < 2)
+            {
+                Debug.LogWarning("Skipping road with " + parsedRoad.RoadSegments.Length + " segment(s).");
+                UnityEngine.Object.Destroy(roadGo);
+                return;
+            }
+
             Mesh mesh = new Mesh();
             Vector3[] vertices = new Vector3[parsedRoad.RoadSegments.Length * 2];
             Vector2[] uvs = new Vector2[parsedRoad.RoadSegments.Length * 2];

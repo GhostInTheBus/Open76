@@ -18,6 +18,13 @@ namespace Assets.Scripts.System
             }
         }
 
+        // A script action that throws (for example because its car was already destroyed) must not stop
+        // every script from running, so the runner catches it and reports it once here.
+        public static void ReportActionError(string actionName, global::System.Exception ex)
+        {
+            WarnOnce("error:" + actionName, "FSM action '" + actionName + "' failed: " + ex.GetType().Name + ": " + ex.Message);
+        }
+
         private void LogUnhandledEntity(string actionName, int entityIndex, FSMEntity entity, StackMachine machine)
         {
             WarnOnce("entity:" + actionName + ":" + entity.Value, "FSM action '" + actionName + "' not implemented for entity " + entityIndex + " (" + entity.Value + ") @ " + (machine.IP - 1));

@@ -18,6 +18,7 @@ namespace Assets.Scripts.System
         private readonly CacheManager _cacheManager;
         private readonly Game _game;
 
+        private static readonly HashSet<string> SkippedObjects = new HashSet<string>();
         private static LevelLoader _instance;
 
         public static LevelLoader Instance
@@ -99,87 +100,109 @@ namespace Assets.Scripts.System
 
                     foreach (MsnMissionParser.Odef odef in mdef.TerrainPatches[x, z].Objects)
                     {
-                        GameObject go = null;
-                        if (odef.ClassId == MsnMissionParser.ClassId.Car)
+                        try
                         {
-                            string lblUpper = odef.Label.ToUpper();
-                            
-                            // Training mission uses hardcoded VCF for player.
-                            string vcfName = odef.Label;
-                            if (msnFilename.ToLower() == "a01.msn" && vcfName == "vppirna1")
+                            GameObject go = null;
+                            // Turrets are vehicle files (for example mg1turr.vcf) with no .sdf model and the vehicle loader
+                            // does not understand them yet. Skip them cleanly instead of failing the whole level.
+                            if (odef.ClassId != MsnMissionParser.ClassId.Car &&
+                                odef.ClassId != MsnMissionParser.ClassId.Special &&
+                                !VirtualFilesystem.Instance.FileExists(odef.Label + ".sdf"))
                             {
-                                vcfName = "vppa01";
-                            }
-
-                            switch (lblUpper)
-                            {
-                                case "SPAWN":
-                                    go = Object.Instantiate(_spawnPrefab);
-                                    go.tag = "Spawn";
-                                    break;
-                                case "REGEN":
-                                    go = Object.Instantiate(_regenPrefab);
-                                    go.tag = "Regen";
-                                    break;
-                                default:
-                                    go = _cacheManager.ImportVcf(vcfName + ".vcf", odef.IsPlayer, out _);
-                                    Car car = go.GetComponent<Car>();
-                                    car.TeamId = odef.TeamId;
-                                    car.IsPlayer = odef.IsPlayer;
-                                    break;
-                            }
-
-                            go.transform.parent = patchGameObject.transform;
-                            go.transform.localPosition = odef.LocalPosition;
-                            go.transform.localRotation = odef.LocalRotation;
-
-                            if (odef.IsPlayer)
-                            {
-                                CameraManager.Instance.MainCamera.GetComponent<SmoothFollow>().Target = go.transform;
-                                go.AddComponent<CarInput>();
-                            }
-                        }
-                        else if (odef.ClassId != MsnMissionParser.ClassId.Special)
-                        {
-                            bool canWreck = odef.ClassId == MsnMissionParser.ClassId.Struct1 ||
-                                            odef.ClassId == MsnMissionParser.ClassId.Ramp ||
-                                            odef.ClassId == MsnMissionParser.ClassId.Struct2;
-
-                            go = _cacheManager.ImportSdf(odef.Label + ".sdf", patchGameObject.transform, odef.LocalPosition, odef.LocalRotation, canWreck, out Sdf sdf, out GameObject wreckedPart);
-                            if (odef.ClassId == MsnMissionParser.ClassId.Sign)
-                            {
-                                go.AddComponent<Sign>();
-                            }
-                            else if (canWreck)
-                            {
-                                Building building = go.AddComponent<Building>();
-                                building.Initialise(sdf, wreckedPart);
-                            }
-                        }
-
-                        if(go != null)
-                        {
-                            go.name = odef.Label + "_" + odef.Id;
-
-                            if (mdef.FSM != null)
-                            {
-                                FSMEntity[] entities = mdef.FSM.EntityTable;
-                                for (int i = 0; i < entities.Length; ++i)
+                                if (SkippedObjects.Add(odef.Label.ToLower()))
                                 {
-                                    if (entities[i].Value == odef.Label && entities[i].Id == odef.Id)
-                                    {
-                                        WorldEntity worldEntity = go.GetComponent<WorldEntity>();
-                                        if (worldEntity != null)
-                                        {
-                                            entities[i].WorldEntity = worldEntity;
-                                            worldEntity.Id = i;
-                                        }
-                                        
-                                        entities[i].Object = go;
+                                    Debug.LogWarning("No model file for object '" + odef.Label + "', skipping it (turrets are not supported yet).");
+                                }
+
+                                continue;
+                            }
+
+                            if (odef.ClassId == MsnMissionParser.ClassId.Car)
+                            {
+                                string lblUpper = odef.Label.ToUpper();
+                            
+                                // Training mission uses hardcoded VCF for player.
+                                string vcfName = odef.Label;
+                                if (msnFilename.ToLower() == "a01.msn" && vcfName == "vppirna1")
+                                {
+                                    vcfName = "vppa01";
+                                }
+
+                                switch (lblUpper)
+                                {
+                                    case "SPAWN":
+                                        go = Object.Instantiate(_spawnPrefab);
+                                        go.tag = "Spawn";
                                         break;
+                                    case "REGEN":
+                                        go = Object.Instantiate(_regenPrefab);
+                                        go.tag = "Regen";
+                                        break;
+                                    default:
+                                        go = _cacheManager.ImportVcf(vcfName + ".vcf", odef.IsPlayer, out _);
+                                        Car car = go.GetComponent<Car>();
+                                        car.TeamId = odef.TeamId;
+                                        car.IsPlayer = odef.IsPlayer;
+                                        break;
+                                }
+
+                                go.transform.parent = patchGameObject.transform;
+                                go.transform.localPosition = odef.LocalPosition;
+                                go.transform.localRotation = odef.LocalRotation;
+
+                                if (odef.IsPlayer)
+                                {
+                                    CameraManager.Instance.MainCamera.GetComponent<SmoothFollow>().Target = go.transform;
+                                    go.AddComponent<CarInput>();
+                                }
+                            }
+                            else if (odef.ClassId != MsnMissionParser.ClassId.Special)
+                            {
+                                bool canWreck = odef.ClassId == MsnMissionParser.ClassId.Struct1 ||
+                                                odef.ClassId == MsnMissionParser.ClassId.Ramp ||
+                                                odef.ClassId == MsnMissionParser.ClassId.Struct2;
+
+                                go = _cacheManager.ImportSdf(odef.Label + ".sdf", patchGameObject.transform, odef.LocalPosition, odef.LocalRotation, canWreck, out Sdf sdf, out GameObject wreckedPart);
+                                if (odef.ClassId == MsnMissionParser.ClassId.Sign)
+                                {
+                                    go.AddComponent<Sign>();
+                                }
+                                else if (canWreck)
+                                {
+                                    Building building = go.AddComponent<Building>();
+                                    building.Initialise(sdf, wreckedPart);
+                                }
+                            }
+
+                            if(go != null)
+                            {
+                                go.name = odef.Label + "_" + odef.Id;
+
+                                if (mdef.FSM != null)
+                                {
+                                    FSMEntity[] entities = mdef.FSM.EntityTable;
+                                    for (int i = 0; i < entities.Length; ++i)
+                                    {
+                                        if (entities[i].Value == odef.Label && entities[i].Id == odef.Id)
+                                        {
+                                            WorldEntity worldEntity = go.GetComponent<WorldEntity>();
+                                            if (worldEntity != null)
+                                            {
+                                                entities[i].WorldEntity = worldEntity;
+                                                worldEntity.Id = i;
+                                            }
+                                        
+                                            entities[i].Object = go;
+                                            break;
+                                        }
                                     }
                                 }
                             }
+                        }
+                        catch (global::System.Exception ex)
+                        {
+                            // A missing or broken object file must not abort the whole level.
+                            Debug.LogWarning("Skipping object '" + odef.Label + "': " + ex.GetType().Name);
                         }
                     }
 
@@ -195,7 +218,16 @@ namespace Assets.Scripts.System
 
             foreach (MsnMissionParser.Ldef ldef in mdef.StringObjects)
             {
-                GameObject sdfObj = _cacheManager.ImportSdf(ldef.Label + ".sdf", null, Vector3.zero, Quaternion.identity, false, out _, out _);
+                GameObject sdfObj;
+                try
+                {
+                    sdfObj = _cacheManager.ImportSdf(ldef.Label + ".sdf", null, Vector3.zero, Quaternion.identity, false, out _, out _);
+                }
+                catch (global::System.Exception ex)
+                {
+                    Debug.LogWarning("Skipping object string '" + ldef.Label + "': " + ex.GetType().Name);
+                    continue;
+                }
 
                 for (int i = 0; i < ldef.StringPositions.Length; i++)
                 {
