@@ -45,6 +45,7 @@ This stands entirely on other people's work. Please credit them first.
 - **Erik Sandberg ([r1sc](https://github.com/r1sc))** created Open76 and wrote the file-format parsers, renderer and mission machine. Original repo: [r1sc/Open76](https://github.com/r1sc/Open76).
 - **Johan Rensenbrink ([JJJohan](https://github.com/JJJohan))** contributed a large share of upstream Open76: vehicle sounds, the GDF parser, radar, weapons and mission-script updates.
 - **"That Tony"** reverse engineered most I'76 file formats on the blog *Hacking on Space* (hackingonspace.blogspot.se). Without that, none of this exists.
+- **The Internet Archive** ([archive.org](https://archive.org) and the Wayback Machine). Many of the original reverse engineering write-ups and modding sites are long gone, and this project's own upstream README says the same: bless web-archive. Thank you for keeping them readable.
 - **Hopper's guide** and the modders who documented the formats years ago (kept in `Notes/`).
 - **Greg Kennedy**, author of [libsmacker](http://libsmacker.sourceforge.net) (Smacker video decoding, in `libsmacker/`).
 - **Activision / Zipper Interactive** made Interstate '76. This project does not include or redistribute their game files.
