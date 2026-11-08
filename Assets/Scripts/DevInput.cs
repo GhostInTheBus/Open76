@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Assets.Scripts
 {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     // Thin wrapper over UnityEngine.Input. Real input always works; tests can inject extra key presses.
     public static class DevInput
     {
@@ -56,4 +57,29 @@ namespace Assets.Scripts
             if (held) Held.Add(key); else Held.Remove(key);
         }
     }
+#else
+    // Release builds: plain pass-through, no key injection.
+    public static class DevInput
+    {
+        public static bool GetKeyDown(KeyCode key)
+        {
+            return Input.GetKeyDown(key);
+        }
+
+        public static bool GetKey(KeyCode key)
+        {
+            return Input.GetKey(key);
+        }
+
+        public static float GetAxis(string axis)
+        {
+            return Input.GetAxis(axis);
+        }
+
+        public static bool GetButton(string button)
+        {
+            return Input.GetButton(button);
+        }
+    }
+#endif
 }

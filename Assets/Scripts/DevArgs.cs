@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 
 namespace Assets.Scripts
 {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     // Command line switches for testing a build without the menus:
     //   -i76mission m01.msn    jump straight into a mission
     //   -i76screenshot out.png save a screenshot after the level settles, then quit
@@ -424,7 +425,10 @@ namespace Assets.Scripts
                 bool up = Physics.Raycast(c - Vector3.up * 500f, Vector3.up, out hit, 3000f);
                 Debug.Log("[DevArgs] ray up from below hit=" + up + (up ? " collider=" + hit.collider.name + " y=" + hit.point.y : ""));
                 TerrainCollider tc = t0.GetComponent<TerrainCollider>();
-                Debug.Log("[DevArgs] tc enabled=" + tc.enabled + " bounds=" + tc.bounds + " dataMatch=" + (tc.terrainData == t0.terrainData));
+                if (tc != null)
+                {
+                    Debug.Log("[DevArgs] tc enabled=" + tc.enabled + " bounds=" + tc.bounds + " dataMatch=" + (tc.terrainData == t0.terrainData));
+                }
             }
             Debug.Log("[DevArgs] gravity=" + Physics.gravity + " timeScale=" + Time.timeScale + " simMode=" + Physics.simulationMode + " autoSync=" + Physics.autoSyncTransforms);
             GameObject spawn = GameObject.FindWithTag("Spawn");
@@ -433,4 +437,11 @@ namespace Assets.Scripts
             Debug.Log("[DevArgs] cam pos=" + (cam != null ? cam.transform.position.ToString() : "none") + " far=" + (cam != null ? cam.farClipPlane : 0));
         }
     }
+#else
+    // Release builds ignore every -i76 switch: no test harness, no background running, no chaos timer.
+    public static class DevArgs
+    {
+        public static readonly bool Drive = false;
+    }
+#endif
 }
