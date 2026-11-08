@@ -1,4 +1,58 @@
-﻿# Open76
+# Open76 for Mac (Apple silicon)
+
+> **TL;DR:** Interstate '76 running natively on an Apple silicon Mac, no Wine, no Rosetta. This is a fork of [r1sc/Open76](https://github.com/r1sc/Open76), a Unity reimplementation of the 1997 Activision game, ported to Unity 6 and a Mac player build. You supply your own copy of the game data. All 40 missions load and run, but it is not a finished game yet (see below).
+
+![Screenshot](Screenshots/sc1.png)
+
+**Not affiliated with Activision.** No game data is included. You need your own legal copy of Interstate '76 (the retail discs or a GOG install). The Nitro Pack is not supported.
+
+## What works
+- Builds and runs as a native arm64 macOS app, intro cutscene included (a native `libsmacker` plays the Smacker videos).
+- All 40 missions (the training run, M01-M15, S01-S07, T01-T17) load and run through a 25-second random key-mashing stress test with no unhandled exceptions.
+- Driving, weapons fire, the camera views, radio, music and sound effects.
+- The Esc menu, including Audio Control (music, SFX and voice levels, saved between runs) and Abort Mission, which returns to the main menu.
+
+## What does not work yet
+- Gun turrets are not loaded (they are skipped with a warning). Missions S06, T11, T12 and T15 have them.
+- No explosion or hit graphics. The original code only lowers a health number and plays a sound.
+- The HUD (damage, gear, radar, compass, weapons) is painted on the cockpit dashboard, so it only shows in the first-person view (F1). The default third-person view has none. Not verified yet on the Mac build.
+- The car physics are Open76's generic model, not the original game's handling.
+- Many mission script commands are still unimplemented, so some missions will not play through to the end. The first training mission holds input on a scripted camera.
+- Known menu glitches are tracked in the issues of this fork.
+
+## Run it on a Mac
+1. Get the game data into a folder with `i76.exe`, `I76.ZFS`, `MISSIONS`, `CUTSCENE` and `DATABASE.MW2` (copy them from your discs or a GOG install; `i76.exe` is only checked for, never run).
+2. Build the app with Unity 6000.3.28f1 (Apple silicon editor):
+
+   ```
+   /Applications/Unity/Hub/Editor/6000.3.28f1/Unity.app/Contents/MacOS/Unity \
+     -batchmode -nographics -quit -projectPath . \
+     -executeMethod Assets.Editor.BuildMac.Build \
+     -buildOutput /path/to/gamefolder/Open76.app
+   ```
+
+   The app looks for the game data two folders above its own `Contents` folder, so `Open76.app` must sit inside the game folder. Or set the `I76_GAME_PATH` environment variable to the data folder.
+3. Start `Open76.app` (the executable inside is named `I76`).
+
+Test flags for the built binary: `-i76mission m01.msn`, `-i76drive`, `-i76mute`, `-i76screenshot out.png -i76delay 20`, `-i76chaos 25`, `-i76menutest`, `-i76aborttest`. Logs go to `~/Library/Logs/DefaultCompany/I76/Player.log`.
+
+## Credits and prior work
+This stands entirely on other people's work. Please credit them first.
+
+- **Erik Sandberg ([r1sc](https://github.com/r1sc))** created Open76 and wrote the file-format parsers, renderer and mission machine. Original repo: [r1sc/Open76](https://github.com/r1sc/Open76).
+- **Johan Rensenbrink ([JJJohan](https://github.com/JJJohan))** contributed a large share of upstream Open76: vehicle sounds, the GDF parser, radar, weapons and mission-script updates.
+- **"That Tony"** reverse engineered most I'76 file formats on the blog *Hacking on Space* (hackingonspace.blogspot.se). Without that, none of this exists.
+- **Hopper's guide** and the modders who documented the formats years ago (kept in `Notes/`).
+- **Greg Kennedy**, author of [libsmacker](http://libsmacker.sourceforge.net) (Smacker video decoding, in `libsmacker/`).
+- **Activision / Zipper Interactive** made Interstate '76. This project does not include or redistribute their game files.
+
+What this fork adds: Unity 6 port, native macOS arm64 player build, native `libsmacker.dylib`, a Rigidbody pose fix for the car spawn, camera black-screen fixes, robust mission loading, a working Audio Control menu, a centered main menu, Abort Mission, and the test flags above. See the git history. The changes were made with the help of Claude Code.
+
+License: GPL, like upstream (see `LICENSE`).
+
+---
+
+# Original README (from r1sc/Open76)
 
 Open76 is an engine reimplementation of Activision's Interstate '76 on the Unity platform.
 
