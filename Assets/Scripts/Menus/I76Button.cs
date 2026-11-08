@@ -32,8 +32,8 @@ namespace Assets.Scripts.Menus
             rectTransform.anchorMin = new Vector2(0.0f, 0.0f);
             rectTransform.pivot = new Vector2(0.5f, 0.5f);
             rectTransform.sizeDelta = new Vector2(normalTexture.width, normalTexture.height);
+            rectTransform.SetParent(parentTransform, false);
             rectTransform.anchoredPosition = new Vector2(x, y);
-            rectTransform.SetParent(parentTransform);
         }
 
         private void OnDestroy()

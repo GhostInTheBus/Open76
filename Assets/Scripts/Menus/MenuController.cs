@@ -1,7 +1,9 @@
 ﻿using System;
+using Assets.Scripts.Camera;
 using Assets.Scripts.System;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Assets.Scripts.Menus
@@ -33,6 +35,14 @@ namespace Assets.Scripts.Menus
                     _currentMenu.Back();
                 else
                     ShowMenu<OptionsMenu>();
+            }
+
+            // Clicking empty space clears the UI selection, which leaves the arrow keys and Enter dead. Re-select a button.
+            if (_currentMenu != null && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null)
+            {
+                Button first = Items.GetComponentInChildren<Button>();
+                if (first != null)
+                    EventSystem.current.SetSelectedGameObject(first.gameObject);
             }
 
             if (_currentMenu != null && EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null)
@@ -70,6 +80,15 @@ namespace Assets.Scripts.Menus
             Time.timeScale = 1;
         }
 
+        // Leaves the mission and goes back to the main menu.
+        public void AbortMission()
+        {
+            CloseMenu();
+            Game.Instance.IntroPlayed = true;
+            CameraManager.Instance.Destroy();
+            SceneManager.LoadScene(0, LoadSceneMode.Single);
+        }
+
         public void ShowMenu<T>() where T : IMenu, new()
         {
             _currentMenu = new T();
@@ -87,13 +106,20 @@ namespace Assets.Scripts.Menus
             MenuDefinition menuDefinition = _currentMenu.BuildMenu(this);
 
             Texture2D texture = CacheManager.Instance.GetTexture(menuDefinition.BackgroundFilename);
-            Background.texture = texture;
-            Background.rectTransform.sizeDelta = new Vector2(texture.width, texture.height);
+            if (texture != null)
+            {
+                Background.texture = texture;
+                Background.rectTransform.sizeDelta = new Vector2(texture.width, texture.height);
+            }
 
             int selectedIndex = EventSystem.current.currentSelectedGameObject == null ? 0 : EventSystem.current.currentSelectedGameObject.transform.GetSiblingIndex();
 
-            foreach (Transform child in Items.transform)
+            // Destroy is deferred to the end of the frame, so detach the old buttons first or the
+            // new ones get the wrong sibling index and a second Redraw in the same frame loses the selection.
+            for (int c = Items.transform.childCount - 1; c >= 0; c--)
             {
+                Transform child = Items.transform.GetChild(c);
+                child.SetParent(null, false);
                 Destroy(child.gameObject);
             }
 

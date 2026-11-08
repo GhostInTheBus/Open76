@@ -15,6 +15,7 @@ namespace Assets.Scripts
         // Set by -i76drive: starts the engine and holds full throttle (for automated driving tests).
         public static bool Drive;
         private static bool _menuTest;
+        private static bool _abortTest;
         private static string _shotPath;
         private static float _chaosSeconds;
         private static bool _deathCam;
@@ -35,6 +36,7 @@ namespace Assets.Scripts
                 if (args[i] == "-i76mute") mute = true;
                 else if (args[i] == "-i76drive") Drive = true;
                 else if (args[i] == "-i76menutest") _menuTest = true;
+                else if (args[i] == "-i76aborttest") _abortTest = true;
                 else if (args[i] == "-i76deathcam") _deathCam = true;
                 else if (i < args.Length - 1 && args[i] == "-i76chaos") float.TryParse(args[i + 1], out _chaosSeconds);
                 else if (i < args.Length - 1 && args[i] == "-i76mission") mission = args[i + 1];
@@ -42,7 +44,7 @@ namespace Assets.Scripts
                 else if (i < args.Length - 1 && args[i] == "-i76delay") float.TryParse(args[i + 1], out delay);
             }
 
-            if (mission == null && shot == null && !mute && !Drive && !_menuTest && _chaosSeconds <= 0f && !_deathCam)
+            if (mission == null && shot == null && !mute && !Drive && !_menuTest && !_abortTest && _chaosSeconds <= 0f && !_deathCam)
             {
                 return;
             }
@@ -75,6 +77,11 @@ namespace Assets.Scripts
             if (_menuTest)
             {
                 yield return MenuTest();
+            }
+
+            if (_abortTest)
+            {
+                yield return AbortTest();
             }
 
             if (_deathCam)
@@ -119,6 +126,34 @@ namespace Assets.Scripts
                 yield return new WaitForSecondsRealtime(3f);
                 Application.Quit();
             }
+        }
+
+        // Mission -> Esc menu -> Abort Mission -> main menu -> start another mission.
+        private static IEnumerator AbortTest()
+        {
+            yield return new WaitForSecondsRealtime(8f);
+            Assets.Scripts.Menus.MenuController menu = FindFirstObjectByType<Assets.Scripts.Menus.MenuController>();
+            if (menu == null)
+            {
+                Debug.Log("[AbortTest] no MenuController found");
+                yield break;
+            }
+
+            menu.ShowMenu<Assets.Scripts.Menus.OptionsMenu>();
+            yield return new WaitForSecondsRealtime(0.5f);
+            yield return PressMenuButton(menu, "Abort Mission", false);
+            yield return new WaitForSecondsRealtime(4f);
+            Debug.Log("[AbortTest] after abort: scene=" + SceneManager.GetActiveScene().name + " timeScale=" + Time.timeScale);
+            if (_shotPath != null)
+            {
+                ScreenCapture.CaptureScreenshot(_shotPath + ".mainmenu.png");
+                yield return new WaitForSecondsRealtime(1.5f);
+            }
+
+            Game.Instance.LevelName = "m02.msn";
+            SceneManager.LoadScene(1);
+            yield return new WaitForSecondsRealtime(12f);
+            Debug.Log("[AbortTest] second mission: scene=" + SceneManager.GetActiveScene().name + " cars=" + FindObjectsByType<Assets.Scripts.Entities.Car>(FindObjectsSortMode.None).Length);
         }
 
         // Opens the in-game menus and presses every button (left, right and arrow adjust), logging anything that fails.

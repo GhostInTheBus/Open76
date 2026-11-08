@@ -12,7 +12,7 @@
             {
                 BackgroundFilename = "6mainmn1",
                 MenuItems = new MenuItem[] {
-                    new MenuButton("Abort Mission", "$6.78", Back),
+                    new MenuButton("Abort Mission", "$6.78", Abort),
                     new MenuBlank(),
                     new MenuButton("Graphic Detail", "$8.98", menuController.ShowMenu<GraphicsMenu>),
                     new MenuButton("Audio Control", "$9.01", menuController.ShowMenu<AudioControlMenu>),
@@ -20,6 +20,11 @@
                     new MenuButton("Continue Mission", "", Back),
                 }
             };
+        }
+
+        private void Abort()
+        {
+            _menuController.AbortMission();
         }
 
         public void Back()

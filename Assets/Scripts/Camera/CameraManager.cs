@@ -31,7 +31,16 @@ namespace Assets.Scripts.Camera
 
         public static CameraManager Instance
         {
-            get { return _instance ?? (_instance = new CameraManager()); }
+            get
+            {
+                // The singleton outlives scene loads (Abort Mission, then a new trip), so rebuild it if its camera was destroyed.
+                if (_instance == null || _instance._mainCameraObject == null)
+                {
+                    _instance = new CameraManager();
+                }
+
+                return _instance;
+            }
         }
 
         public bool AudioEnabled

@@ -27,8 +27,7 @@ namespace Assets.Scripts.Menus
 
         private string GetCurrentResolution()
         {
-            Resolution current = Screen.currentResolution;
-            return current.width + "x" + current.height + "@" + current.refreshRate;
+            return Screen.width + "x" + Screen.height;
         }
 
         private string GetCurrentQuality()
@@ -45,7 +44,15 @@ namespace Assets.Scripts.Menus
                 return;
             }
 
-            int nextIndex = (Array.IndexOf(resolutions, Screen.currentResolution) + 1) % resolutions.Length;
+            // Screen.currentResolution is the display's, not the window's, so match on the window size instead.
+            int currentIndex = -1;
+            for (int i = 0; i < resolutions.Length; i++)
+            {
+                if (resolutions[i].width == Screen.width && resolutions[i].height == Screen.height)
+                    currentIndex = i;
+            }
+
+            int nextIndex = (currentIndex + 1) % resolutions.Length;
             Resolution newResolution = resolutions[nextIndex];
             Screen.SetResolution(newResolution.width, newResolution.height, false, newResolution.refreshRate);
 
