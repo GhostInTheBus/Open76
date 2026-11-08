@@ -232,7 +232,20 @@ namespace Assets.Scripts.System
             foreach (Car car in cars)
             {
                 car.transform.parent = null;
+
+                // The world was just shifted, so move each car's Rigidbody to match its transform.
+                // Otherwise the stale physics pose drags the car back to where the level used to be.
+                Rigidbody carBody = car.GetComponent<Rigidbody>();
+                if (carBody != null)
+                {
+                    carBody.position = car.transform.position;
+                    carBody.rotation = car.transform.rotation;
+                    carBody.linearVelocity = Vector3.zero;
+                    carBody.angularVelocity = Vector3.zero;
+                }
             }
+
+            Physics.SyncTransforms();
 
             if (mdef.FSM != null)
             {

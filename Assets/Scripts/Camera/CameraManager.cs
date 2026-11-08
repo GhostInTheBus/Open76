@@ -59,13 +59,19 @@ namespace Assets.Scripts.Camera
 
         public bool IsMainCameraActive
         {
-            get { return MainCamera == ActiveCamera; }
+            // MainCamera is a UnityEngine.Camera and ActiveCamera an FSMCamera, so comparing them was always false.
+            get { return ActiveCamera != null && ActiveCamera.gameObject == _mainCameraObject; }
         }
 
         private CameraManager()
         {
             _cameraStack = new Stack<FSMCamera>();
-            var mainCamera = Object.FindObjectOfType<FSMCamera>();
+            var mainCamera = Object.FindFirstObjectByType<FSMCamera>();
+            if (mainCamera == null)
+            {
+                // Upstream scenes never got an FSMCamera on the main camera, so add one.
+                mainCamera = UnityEngine.Camera.main.gameObject.AddComponent<FSMCamera>();
+            }
             _mainCameraObject = mainCamera.gameObject;
             _cameraStack.Push(mainCamera);
             _audioEnabled = true;

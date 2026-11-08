@@ -8,6 +8,7 @@ namespace Assets.Scripts.CarSystems
     {
         private Car _car;
         private CarPhysics _carPhysics;
+        private bool _devStartedEngine;
 
         private void Start()
         {
@@ -119,6 +120,22 @@ namespace Assets.Scripts.CarSystems
             float throttle = Input.GetAxis("Vertical");
             float brake = -Mathf.Min(0, throttle);
             throttle = Mathf.Max(0, throttle);
+
+            if (DevArgs.Drive)
+            {
+                // Automated test: start the engine once, then hold full throttle.
+                if (!_devStartedEngine)
+                {
+                    _devStartedEngine = true;
+                    if (!_car.EngineRunning)
+                    {
+                        _car.ToggleEngine();
+                    }
+                }
+
+                throttle = 1f;
+                brake = 0f;
+            }
 
             if (!_car.EngineRunning)
             {

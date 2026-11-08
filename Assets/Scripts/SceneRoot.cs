@@ -30,7 +30,9 @@ namespace Assets.Scripts
                 Game.Instance.GamePath = GamePath;
             }
 
+            Debug.Log("[I76] SceneRoot start t=" + Time.realtimeSinceStartup.ToString("F1") + " mission=" + MissionFile + " gamePath=" + Game.Instance.GamePath);
             yield return LevelLoader.Instance.LoadLevel(MissionFile);
+            Debug.Log("[I76] LoadLevel done t=" + Time.realtimeSinceStartup.ToString("F1"));
             
             if (MissionFile.ToLower().StartsWith("m"))
             {
@@ -39,8 +41,29 @@ namespace Assets.Scripts
                 importedVcf.AddComponent<CarInput>();
 
                 GameObject spawnPoint = GameObject.FindGameObjectsWithTag("Spawn")[0];
-                importedVcf.transform.position = spawnPoint.transform.position;
-                importedVcf.transform.rotation = spawnPoint.transform.rotation;
+                Vector3 spawnPos = spawnPoint.transform.position;
+                Quaternion spawnRot = spawnPoint.transform.rotation;
+
+                // The mission file's spawn height isn't always on the ground, so drop the car onto the terrain below it.
+                Physics.SyncTransforms();
+                if (Physics.Raycast(new Vector3(spawnPos.x, 1000f, spawnPos.z), Vector3.down, out RaycastHit groundHit, 2000f, LayerMask.GetMask("Terrain")))
+                {
+                    spawnPos.y = groundHit.point.y + 1.5f;
+                }
+
+                // Move the Rigidbody itself, otherwise its interpolated physics pose pulls the car back to the origin.
+                importedVcf.transform.SetPositionAndRotation(spawnPos, spawnRot);
+                Rigidbody carBody = importedVcf.GetComponent<Rigidbody>();
+                if (carBody != null)
+                {
+                    carBody.position = spawnPos;
+                    carBody.rotation = spawnRot;
+                    carBody.linearVelocity = Vector3.zero;
+                    carBody.angularVelocity = Vector3.zero;
+                }
+
+                Physics.SyncTransforms();
+                Debug.Log("[I76] spawn=" + spawnPoint.transform.position + " car now=" + importedVcf.transform.position + " spawns=" + GameObject.FindGameObjectsWithTag("Spawn").Length + " t=" + Time.realtimeSinceStartup.ToString("F1"));
 
                 CameraManager.Instance.MainCamera.GetComponent<SmoothFollow>().Target = importedVcf.transform;
             }

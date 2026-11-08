@@ -12,3 +12,8 @@ obj/
 *.exe
 *.pdb
 *.user
+UserSettings/
+Logs/
+*.slnx
+Build/
+.DS_Store

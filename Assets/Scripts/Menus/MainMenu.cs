@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using Assets.Scripts.System;
 using Assets.Scripts.System.Fileparsers;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -136,7 +138,7 @@ namespace Assets.Scripts.Menus
                 Destroy(_textures[i]);
             }
 
-            if (_videoImage.texture != null)
+            if (_videoImage != null && _videoImage.texture != null)
             {
                 Destroy(_videoImage.texture);
                 _videoImage.texture = null;
@@ -223,14 +225,11 @@ namespace Assets.Scripts.Menus
 
         private void OnExit()
         {
-            if (Application.isEditor)
-            {
-                EditorApplication.isPlaying = false;
-            }
-            else
-            {
-                Application.Quit();
-            }
+#if UNITY_EDITOR
+            EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         private void ShowMainMenu()

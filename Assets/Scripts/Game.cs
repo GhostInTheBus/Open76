@@ -20,6 +20,13 @@ namespace Assets.Scripts
 
         private Game()
         {
+            // Lets you point the game at the extracted data without editing scenes.
+            string envPath = global::System.Environment.GetEnvironmentVariable("I76_GAME_PATH");
+            if (!string.IsNullOrEmpty(envPath) && global::System.IO.Directory.Exists(envPath))
+            {
+                GamePath = envPath;
+                return;
+            }
 #if !UNITY_EDITOR
             string gameExeDir = Path.Combine(Application.dataPath, "../..");
             if (File.Exists(Path.Combine(gameExeDir, "i76.exe")))
