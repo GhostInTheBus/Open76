@@ -51,7 +51,6 @@ namespace Assets.Scripts
         private float _secondsPerFrame;
         private float _videoTimer;
         private readonly string _fileName;
-        private GameObject _audioObj;
         private List<AudioSource> _audioTracks;
 
         public VideoPlayer(string videoName)
@@ -131,7 +130,7 @@ namespace Assets.Scripts
             for (int i = 0; i < 7; ++i)
             {
                 // SMK files can have up to 7 audio tracks. As far as I know I76 only uses one, but we'll check anyway.
-                if ((audioData.TrackMask & 1 << i) != 1)
+                if ((audioData.TrackMask & (1 << i)) == 0)
                 {
                     continue;
                 }
@@ -148,8 +147,8 @@ namespace Assets.Scripts
                     audioSamples[j] = audioBytes[j] / 255f;
                 }
 
-                _audioObj = new GameObject("Video Audio");
-                AudioSource audioSource = _audioObj.AddComponent<AudioSource>();
+                GameObject trackObject = new GameObject("Video Audio " + (i + 1));
+                AudioSource audioSource = trackObject.AddComponent<AudioSource>();
                 AudioClip audioClip = AudioClip.Create("Track " + (i + 1), trackSize, audioData.AudioChannels[i], audioData.AudioRate[i], false);
                 audioClip.SetData(audioSamples, 0);
                 audioSource.clip = audioClip;
@@ -202,6 +201,8 @@ namespace Assets.Scripts
                     {
                         OutputImage.texture = Texture2D.blackTexture;
                         Cleanup();
+                        // Cleanup nulls the frame buffer, so stop now instead of running GetFrameData on it.
+                        yield break;
                     }
 
                     _videoTimer -= _secondsPerFrame;
@@ -225,12 +226,6 @@ namespace Assets.Scripts
 
         private void Cleanup()
         {
-            if (_audioObj != null)
-            {
-                UnityEngine.Object.Destroy(_audioObj);
-                _audioObj = null;
-            }
-
             if (_outputTexture != null)
             {
                 UnityEngine.Object.Destroy(_outputTexture);
@@ -247,8 +242,13 @@ namespace Assets.Scripts
             {
                 for (int i = 0; i < _audioTracks.Count; ++i)
                 {
+                    if (_audioTracks[i] == null)
+                    {
+                        continue;
+                    }
+
                     UnityEngine.Object.Destroy(_audioTracks[i].clip);
-                    UnityEngine.Object.Destroy(_audioTracks[i]);
+                    UnityEngine.Object.Destroy(_audioTracks[i].gameObject);
                 }
                 _audioTracks = null;
             }
