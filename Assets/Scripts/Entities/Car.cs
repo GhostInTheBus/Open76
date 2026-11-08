@@ -395,7 +395,7 @@ namespace Assets.Scripts.Entities
             AudioSource explosionSource = _cacheManager.GetAudioSource(_gameObject, "xcar");
             if (explosionSource != null)
             {
-                explosionSource.volume = 0.9f;
+                GameAudio.SetBaseVolume(explosionSource, 0.9f);
                 explosionSource.Play();
             }
 
@@ -536,7 +536,7 @@ namespace Assets.Scripts.Entities
                 _engineStartSound = _cacheManager.GetAudioSource(_gameObject, engineStartSound);
                 if (_engineStartSound != null)
                 {
-                    _engineStartSound.volume = 0.6f;
+                    GameAudio.SetBaseVolume(_engineStartSound, 0.6f);
                 }
             }
 
@@ -551,7 +551,7 @@ namespace Assets.Scripts.Entities
                 if (_engineLoopSound != null)
                 {
                     _engineLoopSound.loop = true;
-                    _engineLoopSound.volume = 0.6f;
+                    GameAudio.SetBaseVolume(_engineLoopSound, 0.6f);
 
                     if (EngineRunning)
                     {

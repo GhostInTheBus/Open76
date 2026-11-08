@@ -69,6 +69,7 @@ namespace Assets.Scripts
             }
 
             var musicAudioSource = GetComponent<AudioSource>();
+            GameAudio.Register(musicAudioSource, AudioCategory.Music);
             AudioClip musicClip = null;
             yield return VirtualFilesystem.Instance.LoadMusicClip(Random.Range(2, 18), clip => musicClip = clip);
             if (musicClip != null)

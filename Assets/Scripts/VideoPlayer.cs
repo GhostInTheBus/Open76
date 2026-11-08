@@ -153,6 +153,7 @@ namespace Assets.Scripts
                 AudioClip audioClip = AudioClip.Create("Track " + (i + 1), trackSize, audioData.AudioChannels[i], audioData.AudioRate[i], false);
                 audioClip.SetData(audioSamples, 0);
                 audioSource.clip = audioClip;
+                GameAudio.Register(audioSource, AudioCategory.Voice);
                 audioSource.Play();
                 _audioTracks.Add(audioSource);
             }

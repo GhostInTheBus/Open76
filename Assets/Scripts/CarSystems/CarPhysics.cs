@@ -80,6 +80,7 @@ namespace Assets.Scripts.CarSystems
             _landingAudioSource = gameObject.AddComponent<AudioSource>();
             _landingAudioSource.playOnAwake = false;
             _landingAudioSource.volume = 0.8f;
+            GameAudio.Register(_landingAudioSource, AudioCategory.Sfx);
             _landingAudioSource.spatialBlend = 1.0f;
             _landingAudioSource.maxDistance = 75f;
             _landingAudioSource.minDistance = 7.5f;
@@ -144,14 +145,14 @@ namespace Assets.Scripts.CarSystems
                     
                     _surfaceAudioSource = _cacheManager.GetAudioSource(gameObject, surfaceSoundName);
                     _surfaceAudioSource.loop = true;
-                    _surfaceAudioSource.volume = 0.6f;
+                    GameAudio.SetBaseVolume(_surfaceAudioSource, 0.6f);
                     _surfaceAudioSource.Play();
                 }
             }
 
             if (_surfaceAudioSource != null)
             {
-                _surfaceAudioSource.volume = Mathf.Min(_rigidbody.velocity.magnitude * 0.025f, 0.6f);
+                GameAudio.SetBaseVolume(_surfaceAudioSource, Mathf.Min(_rigidbody.linearVelocity.magnitude * 0.025f, 0.6f));
                 if (!_surfaceAudioSource.isPlaying)
                 {
                     _surfaceAudioSource.Play();

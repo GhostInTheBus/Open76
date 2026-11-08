@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEngine;
-using UnityEngine.XR;
 
 namespace Assets.Scripts.Menus
 {
@@ -19,16 +18,11 @@ namespace Assets.Scripts.Menus
                     new MenuButton("Screen Resolution", GetCurrentResolution(), NextResolution),
                     new MenuButton("Quality", GetCurrentQuality(), NextQuality),
                     new MenuBlank(),
-                    new MenuButton("Virtual Reality", GetVRStatus(), ToggleVR),
+                    new MenuButton("Virtual Reality", "Unavailable", DoNothing),
                     new MenuBlank(),
                     new MenuButton("Cancel", "", Back)
                 }
             };
-        }
-
-        private string GetVRStatus()
-        {
-            return XRSettings.enabled ? "On" : "Off";
         }
 
         private string GetCurrentResolution()
@@ -45,8 +39,14 @@ namespace Assets.Scripts.Menus
 
         private void NextResolution()
         {
-            int nextIndex = (Array.IndexOf(Screen.resolutions, Screen.currentResolution) + 1) % Screen.resolutions.Length;
-            Resolution newResolution = Screen.resolutions[nextIndex];
+            Resolution[] resolutions = Screen.resolutions;
+            if (resolutions == null || resolutions.Length == 0)
+            {
+                return;
+            }
+
+            int nextIndex = (Array.IndexOf(resolutions, Screen.currentResolution) + 1) % resolutions.Length;
+            Resolution newResolution = resolutions[nextIndex];
             Screen.SetResolution(newResolution.width, newResolution.height, false, newResolution.refreshRate);
 
             _menuController.Redraw();
@@ -60,11 +60,9 @@ namespace Assets.Scripts.Menus
             _menuController.Redraw();
         }
 
-        private void ToggleVR()
+        private void DoNothing()
         {
-            XRSettings.enabled = !XRSettings.enabled;
-
-            _menuController.Redraw();
+            // VR is not supported in the macOS build.
         }
 
         public void Back()

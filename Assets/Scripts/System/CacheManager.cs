@@ -110,7 +110,7 @@ namespace Assets.Scripts.System
                 audioSource.maxDistance = 75f;
             }
 
-            return audioSource;
+            return GameAudio.Register(audioSource, AudioCategory.Sfx);
         }
 
         public Texture2D GetTexture(string textureName)

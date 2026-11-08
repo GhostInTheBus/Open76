@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.System;
+﻿using System;
+using Assets.Scripts.System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -32,6 +33,32 @@ namespace Assets.Scripts.Menus
                     _currentMenu.Back();
                 else
                     ShowMenu<OptionsMenu>();
+            }
+
+            if (_currentMenu != null && EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null)
+            {
+                MenuButtonAdjust adjust = EventSystem.current.currentSelectedGameObject.GetComponent<MenuButtonAdjust>();
+                if (adjust != null)
+                {
+                    if (Input.GetKeyDown(KeyCode.LeftArrow))
+                        adjust.Invoke(-1);
+                    else if (Input.GetKeyDown(KeyCode.RightArrow))
+                        adjust.Invoke(1);
+                }
+            }
+        }
+
+        // A menu action that throws must never take the menu (or the game) down with it.
+        private static void SafeInvoke(Action action)
+        {
+            try
+            {
+                if (action != null)
+                    action();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("Menu action failed: " + ex.Message);
             }
         }
 
@@ -79,7 +106,14 @@ namespace Assets.Scripts.Menus
                     Button button = Instantiate(MenuButtonPrefab, Items.transform);
                     button.transform.Find("TextContainer").GetComponentInChildren<Text>().text = menuButton.Text;
                     button.transform.Find("Value").GetComponent<Text>().text = menuButton.Value;
-                    button.onClick.AddListener(new UnityEngine.Events.UnityAction(menuButton.OnClick));
+                    Action clickAction = menuButton.OnClick;
+                    button.onClick.AddListener(() => SafeInvoke(clickAction));
+
+                    if (menuButton.OnAdjust != null)
+                    {
+                        Action<int> adjustAction = menuButton.OnAdjust;
+                        button.gameObject.AddComponent<MenuButtonAdjust>().Setup(delta => SafeInvoke(() => adjustAction(delta)));
+                    }
 
                     if (selectedIndex == i)
                         EventSystem.current.SetSelectedGameObject(button.gameObject);

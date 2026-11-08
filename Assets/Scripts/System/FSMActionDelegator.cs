@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Camera;
+﻿using System.Collections.Generic;
+using Assets.Scripts.Camera;
 using Assets.Scripts.Entities;
 using UnityEngine;
 
@@ -6,9 +7,20 @@ namespace Assets.Scripts.System
 {
     public class FSMActionDelegator
     {
+        private static readonly HashSet<string> WarnedKeys = new HashSet<string>();
+
+        // Unimplemented script commands can run every frame, so only report each one once.
+        private static void WarnOnce(string key, string message)
+        {
+            if (WarnedKeys.Add(key))
+            {
+                Debug.LogWarning(message);
+            }
+        }
+
         private void LogUnhandledEntity(string actionName, int entityIndex, FSMEntity entity, StackMachine machine)
         {
-            Debug.LogWarning("FSM action '" + actionName + "' not implemented for entity " + entityIndex + " (" + entity.Value + ") @ " + (machine.IP - 1));
+            WarnOnce("entity:" + actionName + ":" + entity.Value, "FSM action '" + actionName + "' not implemented for entity " + entityIndex + " (" + entity.Value + ") @ " + (machine.IP - 1));
         }
 
         public int DoAction(string actionName, StackMachine machine, FSMRunner fsmRunner)
@@ -523,7 +535,7 @@ namespace Assets.Scripts.System
                     fsmRunner.Timers[timerIndex] = Time.unscaledTime;
                     break;
                 default:
-                    Debug.LogWarning("FSM action not implemented: " + actionName + " @ " + (machine.IP-1));
+                    WarnOnce("action:" + actionName, "FSM action not implemented: " + actionName + " @ " + (machine.IP-1));
                     break;
             }
 
@@ -544,7 +556,7 @@ namespace Assets.Scripts.System
             else
             {
                 endOfQueue = true;
-                Debug.Log("Unknown value in cbPrior: " + queueFlag);
+                WarnOnce("cbPrior:" + queueFlag, "Unknown value in cbPrior: " + queueFlag);
             }
 
             string soundName = fsmRunner.FSM.SoundClipTable[soundId];

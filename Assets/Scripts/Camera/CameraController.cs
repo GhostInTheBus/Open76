@@ -96,7 +96,14 @@ namespace Assets.Scripts.Camera
 
             if(Input.GetKeyDown(KeyCode.R))
             {
-                InputTracking.Recenter();
+                // VR only, and it must not break normal play when no headset is present.
+                try
+                {
+                    InputTracking.Recenter();
+                }
+                catch (global::System.Exception)
+                {
+                }
             }
 
             if (FirstPerson)

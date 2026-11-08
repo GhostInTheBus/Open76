@@ -102,6 +102,7 @@ namespace Assets.Scripts.CarSystems.Ui
             _radarAudio = _car.gameObject.AddComponent<AudioSource>();
             _radarAudio.playOnAwake = false;
             _radarAudio.volume = 0.2f;
+            GameAudio.Register(_radarAudio, AudioCategory.Sfx);
 
             CacheManager cacheManager = CacheManager.Instance;
 

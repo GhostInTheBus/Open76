@@ -29,6 +29,7 @@ namespace Assets.Scripts.CarSystems
             _weapons = new Weapon[weaponCount];
             _weaponAudio = car.gameObject.AddComponent<AudioSource>();
             _weaponAudio.volume = 0.5f;
+            GameAudio.Register(_weaponAudio, AudioCategory.Sfx);
             _weaponEmptySound = CacheManager.Instance.GetAudioClip("cammo.gpw");
             _weaponBrokenSound = CacheManager.Instance.GetAudioClip("cwstat.gpw");
             _firingWeapons = new List<Weapon>(5);

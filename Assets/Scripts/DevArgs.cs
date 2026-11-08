@@ -14,6 +14,8 @@ namespace Assets.Scripts
     {
         // Set by -i76drive: starts the engine and holds full throttle (for automated driving tests).
         public static bool Drive;
+        private static bool _menuTest;
+        private static string _shotPath;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Init()
@@ -28,12 +30,13 @@ namespace Assets.Scripts
             {
                 if (args[i] == "-i76mute") mute = true;
                 else if (args[i] == "-i76drive") Drive = true;
+                else if (args[i] == "-i76menutest") _menuTest = true;
                 else if (i < args.Length - 1 && args[i] == "-i76mission") mission = args[i + 1];
                 else if (i < args.Length - 1 && args[i] == "-i76screenshot") shot = args[i + 1];
                 else if (i < args.Length - 1 && args[i] == "-i76delay") float.TryParse(args[i + 1], out delay);
             }
 
-            if (mission == null && shot == null && !mute && !Drive)
+            if (mission == null && shot == null && !mute && !Drive && !_menuTest)
             {
                 return;
             }
@@ -41,6 +44,7 @@ namespace Assets.Scripts
             // Keep ticking even when the window is hidden or unfocused, so unattended test runs don't stall.
             Application.runInBackground = true;
 
+            _shotPath = shot;
             GameObject go = new GameObject("DevArgs");
             DontDestroyOnLoad(go);
             go.AddComponent<DevArgs>().StartCoroutine(Run(mission, shot, delay, mute));
@@ -60,6 +64,11 @@ namespace Assets.Scripts
                 {
                     SceneManager.LoadScene(1);
                 }
+            }
+
+            if (_menuTest)
+            {
+                yield return MenuTest();
             }
 
             if (shot != null)
@@ -90,6 +99,87 @@ namespace Assets.Scripts
                 yield return new WaitForSecondsRealtime(3f);
                 Application.Quit();
             }
+        }
+
+        // Opens the in-game menus and presses every button (left, right and arrow adjust), logging anything that fails.
+        private static IEnumerator MenuTest()
+        {
+            yield return new WaitForSecondsRealtime(6f);
+            Assets.Scripts.Menus.MenuController menu = FindFirstObjectByType<Assets.Scripts.Menus.MenuController>();
+            if (menu == null)
+            {
+                Debug.Log("[MenuTest] no MenuController found");
+                yield break;
+            }
+
+            Debug.Log("[MenuTest] start, frame=" + Time.frameCount + " music=" + GameAudio.GetLevel(AudioCategory.Music) + " sfx=" + GameAudio.GetLevel(AudioCategory.Sfx) + " voice=" + GameAudio.GetLevel(AudioCategory.Voice));
+            menu.ShowMenu<Assets.Scripts.Menus.OptionsMenu>();
+            yield return new WaitForSecondsRealtime(0.5f);
+            Debug.Log("[MenuTest] options menu open, timeScale=" + Time.timeScale);
+
+            menu.ShowMenu<Assets.Scripts.Menus.AudioControlMenu>();
+            yield return new WaitForSecondsRealtime(0.5f);
+            for (int round = 0; round < 3; round++)
+            {
+                for (int idx = 0; idx < 3; idx++)
+                {
+                    yield return PressMenuButton(menu, new[] { "Music Level", "SFX Level", "Voice Level" }[idx], round == 2);
+                }
+            }
+
+            Debug.Log("[MenuTest] audio clicked, music=" + GameAudio.GetLevel(AudioCategory.Music) + " sfx=" + GameAudio.GetLevel(AudioCategory.Sfx) + " voice=" + GameAudio.GetLevel(AudioCategory.Voice));
+            if (_shotPath != null)
+            {
+                ScreenCapture.CaptureScreenshot(_shotPath + ".audiomenu.png");
+                yield return new WaitForSecondsRealtime(1.5f);
+            }
+
+            GameAudio.SetLevel(AudioCategory.Music, 3);
+            GameAudio.SetLevel(AudioCategory.Sfx, 10);
+            GameAudio.SetLevel(AudioCategory.Voice, 10);
+            AudioSource musicSrc = null;
+            foreach (AudioSource src in FindObjectsByType<AudioSource>(FindObjectsSortMode.None))
+            {
+                if (src.clip != null && src.clip.name.Contains("music")) musicSrc = src;
+            }
+            Debug.Log("[MenuTest] music source volume at level 3 = " + (musicSrc != null ? musicSrc.volume.ToString("F2") : "n/a"));
+
+            menu.ShowMenu<Assets.Scripts.Menus.GraphicsMenu>();
+            yield return new WaitForSecondsRealtime(0.5f);
+            yield return PressMenuButton(menu, "Quality", false);
+            yield return PressMenuButton(menu, "Virtual Reality", false);
+
+            menu.CloseMenu();
+            yield return new WaitForSecondsRealtime(1f);
+            Debug.Log("[MenuTest] done, frame=" + Time.frameCount + " timeScale=" + Time.timeScale);
+        }
+
+        private static IEnumerator PressMenuButton(Assets.Scripts.Menus.MenuController menu, string label, bool alsoAdjustDown)
+        {
+            foreach (UnityEngine.UI.Button b in menu.GetComponentsInChildren<UnityEngine.UI.Button>())
+            {
+                Transform container = b != null ? b.transform.Find("TextContainer") : null;
+                UnityEngine.UI.Text text = container != null ? container.GetComponentInChildren<UnityEngine.UI.Text>() : null;
+                if (text == null || text.text != label)
+                {
+                    continue;
+                }
+
+                b.onClick.Invoke();
+                Debug.Log("[MenuTest] pressed " + label);
+                if (alsoAdjustDown)
+                {
+                    Assets.Scripts.Menus.MenuButtonAdjust adj = b.GetComponent<Assets.Scripts.Menus.MenuButtonAdjust>();
+                    if (adj != null)
+                    {
+                        adj.Invoke(-1);
+                    }
+                }
+
+                break;
+            }
+
+            yield return new WaitForSecondsRealtime(0.3f);
         }
 
         private static string GroundY(Vector3 p)

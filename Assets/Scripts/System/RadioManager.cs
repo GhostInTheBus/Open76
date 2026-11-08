@@ -24,6 +24,7 @@ namespace Assets.Scripts.System
             _radioSource.spatialize = false;
             _radioSource.priority = 0;
             _radioSource.volume = 0.4f;
+            GameAudio.Register(_radioSource, AudioCategory.Voice);
         }
 
         private static RadioManager _instance;
