@@ -27,6 +27,11 @@ namespace Assets.Scripts
                 GamePath = envPath;
                 return;
             }
+
+            if (!string.IsNullOrEmpty(envPath))
+            {
+                UnityEngine.Debug.LogWarning("I76_GAME_PATH is set to '" + envPath + "' but that folder does not exist, using the default game path.");
+            }
 #if !UNITY_EDITOR
             string gameExeDir = Path.Combine(Application.dataPath, "../..");
             if (File.Exists(Path.Combine(gameExeDir, "i76.exe")))

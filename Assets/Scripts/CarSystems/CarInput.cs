@@ -18,7 +18,7 @@ namespace Assets.Scripts.CarSystems
 
         private void Update()
         {
-            if (!CameraManager.Instance.IsMainCameraActive || !_car.Alive || _car.WeaponsController == null)
+            if (!CameraManager.Instance.IsMainCameraActive || !_car.Alive)
             {
                 return;
             }
@@ -36,81 +36,86 @@ namespace Assets.Scripts.CarSystems
                 Car.FireWeapons = !Car.FireWeapons;
             }
 
-            // Cycle radar target.
-            if (DevInput.GetKeyDown(KeyCode.E))
+            // Weapons, specials and radar are gone after a kill; driving below must still work without them.
+            if (_car.WeaponsController != null && _car.SpecialsController != null && _car.RadarPanel != null)
             {
-                _car.RadarPanel.CycleTarget();
+                // Cycle radar target.
+                if (DevInput.GetKeyDown(KeyCode.E))
+                {
+                    _car.RadarPanel.CycleTarget();
+                }
+
+                // Toggle radar range.
+                if (DevInput.GetKeyDown(KeyCode.R))
+                {
+                    _car.RadarPanel.ToggleRange();
+                }
+
+                // Target nearest enemy.
+                if (DevInput.GetKeyDown(KeyCode.T))
+                {
+                    _car.RadarPanel.TargetNearest();
+                }
+
+                // Clear radar target.
+                if (DevInput.GetKeyDown(KeyCode.Y))
+                {
+                    _car.RadarPanel.ClearTarget();
+                }
+
+                // Cycle weapon.
+                if (DevInput.GetKeyDown(KeyCode.Return))
+                {
+                    _car.WeaponsController.CycleWeapon();
+                }
+
+                // Fire active weapon(s).
+                if (DevInput.GetKey(KeyCode.Space))
+                {
+                    _car.WeaponsController.Fire(-1);
+                }
+                else if (DevInput.GetKey(KeyCode.Alpha1)) // Fire weapon 1.
+                {
+                    _car.WeaponsController.Fire(0);
+                }
+                else if (DevInput.GetKey(KeyCode.Alpha2)) // Fire weapon 2.
+                {
+                    _car.WeaponsController.Fire(1);
+                }
+                else if (DevInput.GetKey(KeyCode.Alpha3)) // Fire weapon 3.
+                {
+                    _car.WeaponsController.Fire(2);
+                }
+                else if (DevInput.GetKey(KeyCode.Alpha4)) // Fire weapon 4.
+                {
+                    _car.WeaponsController.Fire(3);
+                }
+                else if (DevInput.GetKey(KeyCode.Alpha5)) // Fire weapon 5.
+                {
+                    _car.WeaponsController.Fire(4);
+                }
+                else if (DevInput.GetKey(KeyCode.Alpha6)) // Fire special 1.
+                {
+                    _car.SpecialsController.Fire(0);
+                }
+                else
+                {
+                    _car.WeaponsController.StopFiring();
+                }
+
+                // Fire special 2.
+                if (DevInput.GetKey(KeyCode.Alpha7))
+                {
+                    _car.SpecialsController.Fire(1);
+                }
+
+                // Fire special 3.
+                if (DevInput.GetKey(KeyCode.Alpha8))
+                {
+                    _car.SpecialsController.Fire(2);
+                }
             }
 
-            // Toggle radar range.
-            if (DevInput.GetKeyDown(KeyCode.R))
-            {
-                _car.RadarPanel.ToggleRange();
-            }
-
-            // Target nearest enemy.
-            if (DevInput.GetKeyDown(KeyCode.T))
-            {
-                _car.RadarPanel.TargetNearest();
-            }
-
-            // Clear radar target.
-            if (DevInput.GetKeyDown(KeyCode.Y))
-            {
-                _car.RadarPanel.ClearTarget();
-            }
-
-            // Cycle weapon.
-            if (DevInput.GetKeyDown(KeyCode.Return))
-            {
-                _car.WeaponsController.CycleWeapon();
-            }
-
-            // Fire active weapon(s).
-            if (DevInput.GetKey(KeyCode.Space))
-            {
-                _car.WeaponsController.Fire(-1);
-            }
-            else if (DevInput.GetKey(KeyCode.Alpha1)) // Fire weapon 1.
-            {
-                _car.WeaponsController.Fire(0);
-            }
-            else if (DevInput.GetKey(KeyCode.Alpha2)) // Fire weapon 2.
-            {
-                _car.WeaponsController.Fire(1);
-            }
-            else if (DevInput.GetKey(KeyCode.Alpha3)) // Fire weapon 3.
-            {
-                _car.WeaponsController.Fire(2);
-            }
-            else if (DevInput.GetKey(KeyCode.Alpha4)) // Fire weapon 4.
-            {
-                _car.WeaponsController.Fire(3);
-            }
-            else if (DevInput.GetKey(KeyCode.Alpha5)) // Fire weapon 5.
-            {
-                _car.WeaponsController.Fire(4);
-            }
-            else if (DevInput.GetKey(KeyCode.Alpha6)) // Fire special 1.
-            {
-                _car.SpecialsController.Fire(0);
-            }
-            else
-            {
-                _car.WeaponsController.StopFiring();
-            }
-
-            // Fire special 2.
-            if (DevInput.GetKey(KeyCode.Alpha7))
-            {
-                _car.SpecialsController.Fire(1);
-            }
-
-            // Fire special 3.
-            if (DevInput.GetKey(KeyCode.Alpha8))
-            {
-                _car.SpecialsController.Fire(2);
-            }
 
             // Start / Stop engine.
             if (DevInput.GetKeyDown(KeyCode.S))
