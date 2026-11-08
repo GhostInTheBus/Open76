@@ -68,7 +68,7 @@ namespace Assets.Scripts.Menus
             }
             catch (Exception ex)
             {
-                Debug.LogWarning("Menu action failed: " + ex.Message);
+                Debug.LogException(ex);
             }
         }
 

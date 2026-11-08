@@ -18,11 +18,22 @@ namespace Assets.Scripts.System
             }
         }
 
+        // Forget what was already reported, so each level logs its own first occurrence of every problem.
+        public static void ResetWarnings()
+        {
+            WarnedKeys.Clear();
+        }
+
         // A script action that throws (for example because its car was already destroyed) must not stop
-        // every script from running, so the runner catches it and reports it once here.
+        // every script from running, so the runner catches it and reports it here, with the full exception
+        // the first time per action in each level.
         public static void ReportActionError(string actionName, global::System.Exception ex)
         {
-            WarnOnce("error:" + actionName, "FSM action '" + actionName + "' failed: " + ex.GetType().Name + ": " + ex.Message);
+            if (WarnedKeys.Add("error:" + actionName))
+            {
+                Debug.LogError("FSM action '" + actionName + "' failed (further failures of this action are not logged this level).");
+                Debug.LogException(ex);
+            }
         }
 
         private void LogUnhandledEntity(string actionName, int entityIndex, FSMEntity entity, StackMachine machine)

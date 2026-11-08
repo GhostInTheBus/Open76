@@ -19,6 +19,7 @@ namespace Assets.Scripts.System
         private readonly Game _game;
 
         private static readonly HashSet<string> SkippedObjects = new HashSet<string>();
+        private static readonly HashSet<string> LoggedExceptions = new HashSet<string>();
         private static LevelLoader _instance;
 
         public static LevelLoader Instance
@@ -35,8 +36,22 @@ namespace Assets.Scripts.System
             _game = Game.Instance;
         }
         
+        // Many objects can fail for the same reason, so the full exception is logged once per kind and level.
+        private static void ReportSkipped(string what, global::System.Exception ex)
+        {
+            Debug.LogWarning("Skipping " + what + ": " + ex.GetType().Name + ": " + ex.Message);
+            if (LoggedExceptions.Add(ex.GetType().FullName + ex.Message))
+            {
+                Debug.LogException(ex);
+            }
+        }
+
         public IEnumerator LoadLevel(string msnFilename)
         {
+            SkippedObjects.Clear();
+            LoggedExceptions.Clear();
+            FSMActionDelegator.ResetWarnings();
+
             _game.LevelName = msnFilename;
             string sceneName = SceneManager.GetActiveScene().name;
             if (sceneName != "Level")
@@ -202,7 +217,7 @@ namespace Assets.Scripts.System
                         catch (global::System.Exception ex)
                         {
                             // A missing or broken object file must not abort the whole level.
-                            Debug.LogWarning("Skipping object '" + odef.Label + "': " + ex.GetType().Name);
+                            ReportSkipped("object '" + odef.Label + "'", ex);
                         }
                     }
 
@@ -225,7 +240,7 @@ namespace Assets.Scripts.System
                 }
                 catch (global::System.Exception ex)
                 {
-                    Debug.LogWarning("Skipping object string '" + ldef.Label + "': " + ex.GetType().Name);
+                    ReportSkipped("object string '" + ldef.Label + "'", ex);
                     continue;
                 }
 
