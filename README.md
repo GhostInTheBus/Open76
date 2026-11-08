@@ -10,7 +10,7 @@ https://github.com/user-attachments/assets/599c208a-577a-489e-90e7-023e9288dbdd
 
 ## What works
 - Builds and runs as a native arm64 macOS app, intro cutscene included (a native `libsmacker` plays the Smacker videos).
-- All 40 missions (the training run, M01-M15, S01-S07, T01-T17) load and run through a 25-second random key-mashing stress test with no unhandled exceptions.
+- All 40 missions (the training run, M01-M15, S01-S07, T01-T17) load, and a 25-second random key-mashing stress test passed on each. That is a short smoke test, not proof that nothing can throw.
 - Driving, weapons fire, the camera views, music and sound effects.
 - The Esc menu, including Audio Control (music, SFX and voice levels, saved between runs) and Abort Mission, which returns to the main menu.
 
@@ -35,7 +35,7 @@ https://github.com/user-attachments/assets/599c208a-577a-489e-90e7-023e9288dbdd
    The app looks for the game data two folders above its own `Contents` folder, so `Open76.app` must sit inside the game folder. Or set the `I76_GAME_PATH` environment variable to the data folder.
 3. Start `Open76.app` (the executable inside is named `I76`).
 
-Test flags for the built binary: `-i76mission m01.msn`, `-i76drive`, `-i76mute`, `-i76screenshot out.png -i76delay 20`, `-i76chaos 25`, `-i76menutest`, `-i76aborttest`. Logs go to `~/Library/Logs/DefaultCompany/I76/Player.log`.
+Test flags for the built binary: `-i76mission m01.msn`, `-i76drive`, `-i76mute`, `-i76screenshot out.png -i76delay 20`, `-i76chaos 25`, `-i76menutest`, `-i76aborttest`. They only work in a development build (add `-devBuild` to the build command above) or in the editor. A normal build ignores them. Logs go to `~/Library/Logs/Open76/I76/Player.log`.
 
 ## Credits and prior work
 This stands entirely on other people's work. Please credit them first.

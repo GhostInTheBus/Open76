@@ -118,8 +118,9 @@ namespace Assets.Scripts.System
                         try
                         {
                             GameObject go = null;
-                            // Turrets are vehicle files (for example mg1turr.vcf) with no .sdf model and the vehicle loader
-                            // does not understand them yet. Skip them cleanly instead of failing the whole level.
+                            // Skip any object that is not a car or special and has no .sdf model file, instead of failing the
+                            // whole level. In practice these are the turrets (vehicle files such as mg1turr.vcf), which the
+                            // vehicle loader does not understand yet.
                             if (odef.ClassId != MsnMissionParser.ClassId.Car &&
                                 odef.ClassId != MsnMissionParser.ClassId.Special &&
                                 !VirtualFilesystem.Instance.FileExists(odef.Label + ".sdf"))

@@ -54,7 +54,7 @@ namespace Assets.Scripts.Menus
 
             int nextIndex = (currentIndex + 1) % resolutions.Length;
             Resolution newResolution = resolutions[nextIndex];
-            Screen.SetResolution(newResolution.width, newResolution.height, false, newResolution.refreshRate);
+            Screen.SetResolution(newResolution.width, newResolution.height, FullScreenMode.Windowed, newResolution.refreshRateRatio);
 
             _menuController.Redraw();
         }
