@@ -74,9 +74,26 @@ namespace Assets.Scripts
             yield return VirtualFilesystem.Instance.LoadMusicClip(Random.Range(2, 18), clip => musicClip = clip);
             if (musicClip != null)
             {
+                DestroyMusicClip(musicAudioSource);
                 musicAudioSource.clip = musicClip;
                 musicAudioSource.Play();
             }
+        }
+
+        // The decoded track is tens of MB and nothing else owns it, so free it before the next one and when the level ends.
+        private static void DestroyMusicClip(AudioSource source)
+        {
+            if (source != null && source.clip != null)
+            {
+                source.Stop();
+                Destroy(source.clip);
+                source.clip = null;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            DestroyMusicClip(GetComponent<AudioSource>());
         }
     }
 }
