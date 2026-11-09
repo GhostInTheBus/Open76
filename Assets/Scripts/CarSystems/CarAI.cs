@@ -316,13 +316,34 @@ namespace Assets.Scripts.CarSystems
             }
         }
 
+        // i76.exe isWithinSqNav (sub_40b060): a square region, not a squared distance. True when both the x and the z
+        // offset from the path's first node are smaller than the distance. The exe only looks at the first node.
+        public bool IsWithinNavSquare(FSMPath path, int distance)
+        {
+            return WithinNavSquare(_worldTransform, _transform, path, distance);
+        }
+
+        public static bool WithinNavSquare(Transform world, Transform car, FSMPath path, int distance)
+        {
+            Vector3 worldPos = world.position;
+            Vector3 carPos = car.position;
+            I76Vector3 first = path.Nodes[0];
+            return Mathf.Abs(worldPos.x + first.x - carPos.x) < distance &&
+                   Mathf.Abs(worldPos.z + first.z - carPos.z) < distance;
+        }
+
         public bool IsWithinNav(FSMPath path, int distance)
+        {
+            return WithinNav(_worldTransform, _transform, path, distance);
+        }
+
+        public static bool WithinNav(Transform world, Transform car, FSMPath path, int distance)
         {
             I76Vector3[] nodes = path.Nodes;
             int nodeCountMin1 = nodes.Length - 1;
 
-            Vector3 worldPos = _worldTransform.position;
-            Vector3 carPos = _transform.position;
+            Vector3 worldPos = world.position;
+            Vector3 carPos = car.position;
             Vector2 pos2D = new Vector2(carPos.x, carPos.z);
             
             if (nodeCountMin1 == 0)

@@ -542,7 +542,30 @@ namespace Assets.Scripts.Entities
                 return AI.IsWithinNav(path, distance);
             }
 
-            return false;
+            // The player car and dead cars have no AI; the nav math only needs positions.
+            return CarAI.WithinNav(WorldTransform(), transform, path, distance);
+        }
+
+        public bool IsWithinNavSquare(FSMPath path, int distance)
+        {
+            if (AI != null)
+            {
+                return AI.IsWithinNavSquare(path, distance);
+            }
+
+            return CarAI.WithinNavSquare(WorldTransform(), transform, path, distance);
+        }
+
+        private static Transform _worldTransformCache;
+
+        private static Transform WorldTransform()
+        {
+            if (_worldTransformCache == null)
+            {
+                _worldTransformCache = GameObject.Find("World").transform;
+            }
+
+            return _worldTransformCache;
         }
 
         private void UpdateEngineSounds()
