@@ -53,6 +53,42 @@ namespace Assets.Scripts.Entities
             return total;
         }
 
+        private int _lastShotFrame = -100;
+
+        // One-shot latch, same meaning as Car.ConsumeShot.
+        public bool ConsumeShot()
+        {
+            if (Time.frameCount - _lastShotFrame <= 1)
+            {
+                _lastShotFrame = -100;
+                return true;
+            }
+
+            return false;
+        }
+
+        public float HealthPercent
+        {
+            get { return _startTotal > 0 ? 100f * Total() / _startTotal : 0f; }
+        }
+
+        // Used by the mission script action destroy.
+        public void Kill()
+        {
+            if (!Alive)
+            {
+                return;
+            }
+
+            for (int i = 0; i < Sides; ++i)
+            {
+                _armor[i] = 0;
+                _chassis[i] = 0;
+            }
+
+            SetHealthGroup();
+        }
+
         public override void ApplyDamage(DamageType damageType, Vector3 hitNormal, int damage)
         {
             if (!Alive)
@@ -61,6 +97,10 @@ namespace Assets.Scripts.Entities
             }
 
             Attacked = true;
+            if (damageType == DamageType.Projectile)
+            {
+                _lastShotFrame = Time.frameCount;
+            }
 
             // Same side selection as Car.ApplyDamage.
             float angle = Quaternion.FromToRotation(Vector3.up, hitNormal).eulerAngles.z;

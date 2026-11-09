@@ -162,8 +162,62 @@ namespace Assets.Scripts.Entities
             return system;
         }
 
+        // i76.exe: isShot is a one-shot latch. It is true when the vehicle was shot this tick or the previous one,
+        // and reading it clears it.
+        private int _lastShotFrame = -100;
+
+        public bool ConsumeShot()
+        {
+            if (Time.frameCount - _lastShotFrame <= 1)
+            {
+                _lastShotFrame = -100;
+                return true;
+            }
+
+            return false;
+        }
+
+        // Health as 0..100 for the mission script action hpLesser. i76.exe builds this from the weakest vehicle component
+        // (current / maximum, clamped to 0..1) and maps it onto 0..100 in bands. Open76 only takes the weakest component
+        // times 100: 100 when undamaged, 0 when a component is gone. The exact banding is not reproduced.
+        public float HealthPercent
+        {
+            get
+            {
+                if (_vehicleHitPoints == null)
+                {
+                    return 100f;
+                }
+
+                float lowest = 1f;
+                for (int i = 0; i < _vehicleHitPoints.Length; ++i)
+                {
+                    SystemType type = (SystemType)i;
+                    if (type == SystemType.TireFL || type == SystemType.TireFR || type == SystemType.TireBL || type == SystemType.TireBR)
+                    {
+                        continue;
+                    }
+
+                    if (_vehicleStartHitPoints[i] <= 0)
+                    {
+                        continue;
+                    }
+
+                    lowest = Mathf.Min(lowest, Mathf.Clamp01(_vehicleHitPoints[i] / (float)_vehicleStartHitPoints[i]));
+                }
+
+                return lowest * 100f;
+            }
+        }
+
         public override void ApplyDamage(DamageType damageType, Vector3 normal, int damageAmount)
         {
+            Attacked = true;
+            if (damageType == DamageType.Projectile)
+            {
+                _lastShotFrame = Time.frameCount;
+            }
+
             float angle = Quaternion.FromToRotation(Vector3.up, normal).eulerAngles.z;
 
             // TODO: Figure out how tire damage should be applied here.

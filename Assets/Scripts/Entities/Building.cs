@@ -23,6 +23,20 @@ namespace Assets.Scripts.Entities
             _wreckedObject = wreckedObject;
         }
 
+        public float HealthPercent
+        {
+            get { return _sdf != null && _sdf.Health > 0 ? Mathf.Clamp(100f * _health / _sdf.Health, 0f, 100f) : 100f; }
+        }
+
+        // Used by the mission script action destroy.
+        public void Kill()
+        {
+            if (Alive)
+            {
+                ApplyDamage(DamageType.Force, Vector3.up, _health);
+            }
+        }
+
         public override void ApplyDamage(DamageType damageType, Vector3 hitNormal, int damage)
         {
             bool alive = Alive;

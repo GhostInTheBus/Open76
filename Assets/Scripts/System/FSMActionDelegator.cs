@@ -575,6 +575,129 @@ namespace Assets.Scripts.System
                     int timerIndex = args.Dequeue().Value;
                     fsmRunner.Timers[timerIndex] = Time.unscaledTime;
                     break;
+                // The four actions below follow what i76.exe does (see Projects/Dev/Interstate 76 Gaps in the vault).
+                case "destroy":
+                    {
+                        // Kills a car or a structure. i76.exe logs an error when the target is already dead.
+                        int entityIndex = args.Dequeue().Value;
+                        FSMEntity entity = fsmRunner.FSM.EntityTable[entityIndex];
+                        if (entity.Object == null)
+                        {
+                            WarnMissingEntity(actionName, entityIndex);
+                            break;
+                        }
+
+                        Car car = CarOf(entity);
+                        Turret turret = entity.Object.GetComponent<Turret>();
+                        Building building = entity.Object.GetComponent<Building>();
+                        if (car != null)
+                        {
+                            car.Kill();
+                        }
+                        else if (turret != null)
+                        {
+                            turret.Kill();
+                        }
+                        else if (building != null)
+                        {
+                            building.Kill();
+                        }
+                        else
+                        {
+                            LogUnhandledEntity(actionName, entityIndex, entity, machine);
+                        }
+                    }
+                    break;
+                case "isShot":
+                    {
+                        // True once when the vehicle was shot this tick or the previous one, then cleared.
+                        int entityIndex = args.Dequeue().Value;
+                        FSMEntity entity = fsmRunner.FSM.EntityTable[entityIndex];
+                        if (entity.Object == null)
+                        {
+                            WarnMissingEntity(actionName, entityIndex);
+                            return 0;
+                        }
+
+                        Car car = CarOf(entity);
+                        if (car != null)
+                        {
+                            return car.ConsumeShot() ? 1 : 0;
+                        }
+
+                        Turret turret = entity.Object.GetComponent<Turret>();
+                        if (turret != null)
+                        {
+                            return turret.ConsumeShot() ? 1 : 0;
+                        }
+
+                        LogUnhandledEntity(actionName, entityIndex, entity, machine);
+                    }
+                    break;
+                case "allEnemyDead":
+                    {
+                        // True when every vehicle on every team other than the entity's own (teams 1 to 6) is dead.
+                        int entityIndex = args.Dequeue().Value;
+                        FSMEntity entity = fsmRunner.FSM.EntityTable[entityIndex];
+                        if (entity.Object == null)
+                        {
+                            WarnMissingEntity(actionName, entityIndex);
+                            return 0;
+                        }
+
+                        Car self = CarOf(entity);
+                        Turret selfTurret = entity.Object.GetComponent<Turret>();
+                        if (self == null && selfTurret == null)
+                        {
+                            LogUnhandledEntity(actionName, entityIndex, entity, machine);
+                            break;
+                        }
+
+                        int team = self != null ? self.TeamId : selfTurret.TeamId;
+                        foreach (Car other in EntityManager.Instance.Cars)
+                        {
+                            if (other.TeamId >= 1 && other.TeamId <= 6 && other.TeamId != team && other.Alive)
+                            {
+                                return 0;
+                            }
+                        }
+
+                        return 1;
+                    }
+                case "hpLesser":
+                    {
+                        // True when the entity's health (0 to 100) is below the threshold. The second argument is not used by i76.exe.
+                        int entityIndex = args.Dequeue().Value;
+                        args.Dequeue();
+                        int threshold = args.Dequeue().Value;
+                        FSMEntity entity = fsmRunner.FSM.EntityTable[entityIndex];
+                        if (entity.Object == null)
+                        {
+                            WarnMissingEntity(actionName, entityIndex);
+                            return 0;
+                        }
+
+                        Car car = CarOf(entity);
+                        if (car != null)
+                        {
+                            return car.HealthPercent < threshold ? 1 : 0;
+                        }
+
+                        Turret turret = entity.Object.GetComponent<Turret>();
+                        if (turret != null)
+                        {
+                            return turret.HealthPercent < threshold ? 1 : 0;
+                        }
+
+                        Building building = entity.Object.GetComponent<Building>();
+                        if (building != null)
+                        {
+                            return building.HealthPercent < threshold ? 1 : 0;
+                        }
+
+                        LogUnhandledEntity(actionName, entityIndex, entity, machine);
+                    }
+                    break;
                 default:
                     WarnOnce("action:" + actionName, "FSM action not implemented: " + actionName + " @ " + (machine.IP-1));
                     break;
