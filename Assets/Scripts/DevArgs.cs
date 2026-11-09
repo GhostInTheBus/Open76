@@ -140,6 +140,22 @@ namespace Assets.Scripts
 
         private static IEnumerator LookAtObject(string namePrefix)
         {
+            // Whole scene: renderers that would show as magenta (error shader or missing material).
+            int bad = 0;
+            foreach (Renderer r in FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    if (m == null || m.shader == null || m.shader.name == "Hidden/InternalErrorShader")
+                    {
+                        ++bad;
+                        Debug.Log("[LookAt] MAGENTA " + r.name + " parent=" + (r.transform.parent != null ? r.transform.parent.name : "-") + " material=" + (m != null ? m.name : "null"));
+                    }
+                }
+            }
+
+            Debug.Log("[LookAt] scene renderers with an error shader or missing material: " + bad);
+
             Transform target = null;
             foreach (Transform t in FindObjectsByType<Transform>(FindObjectsSortMode.None))
             {
@@ -154,6 +170,20 @@ namespace Assets.Scripts
             {
                 Debug.Log("[LookAt] no object starting with '" + namePrefix + "' or no main camera");
                 yield break;
+            }
+
+            // List what the target is made of: one line per renderer with its materials, shaders and textures.
+            foreach (Renderer r in target.GetComponentsInChildren<Renderer>(true))
+            {
+                global::System.Text.StringBuilder line = new global::System.Text.StringBuilder();
+                line.Append("[LookAt] renderer ").Append(r.name).Append(" active=").Append(r.gameObject.activeInHierarchy)
+                    .Append(" center=").Append(r.bounds.center).Append(" size=").Append(r.bounds.size);
+                foreach (Material m in r.sharedMaterials)
+                {
+                    line.Append(" | ").Append(m != null ? m.name + " shader=" + m.shader.name + " tex=" + (m.mainTexture != null ? m.mainTexture.name + " " + m.mainTexture.width + "x" + m.mainTexture.height : "none") : "null-material");
+                }
+
+                Debug.Log(line.ToString());
             }
 
             // Stop the game's own camera scripts from moving the camera back.
