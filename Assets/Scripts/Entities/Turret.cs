@@ -28,7 +28,8 @@ namespace Assets.Scripts.Entities
 
         public override bool Alive
         {
-            get { return Total() > 0; }
+            // False until Configure has run: a half built turret (its import threw) must not crash on a hit.
+            get { return _armor != null && Total() > 0; }
         }
 
         public void Configure(Vdf vdf, Vcf vcf, Transform thirdPerson)

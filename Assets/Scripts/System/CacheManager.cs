@@ -549,86 +549,94 @@ namespace Assets.Scripts.System
 
             GameObject root = new GameObject(vdf.Name + " (" + vcf.VariantName + ")");
             Turret turret = root.AddComponent<Turret>();
-
-            foreach (VLoc vLoc in vdf.VLocs)
+            // A throw halfway through would leave a turret without a body in the scene, so remove it and let the caller log the error.
+            try
             {
-                GameObject vlocGo = new GameObject("VLOC");
-                vlocGo.transform.parent = root.transform;
-                vlocGo.transform.localRotation = Quaternion.LookRotation(vLoc.Forward, vLoc.Up);
-                vlocGo.transform.localPosition = vLoc.Position;
-            }
-
-            GameObject chassis = new GameObject("Chassis");
-            chassis.transform.parent = root.transform;
-
-            GameObject thirdPerson = new GameObject("ThirdPerson");
-            thirdPerson.transform.parent = chassis.transform;
-
-            Transform[] weaponMountTransforms = new Transform[vdf.HLocs.Count];
-            for (int i = 0; i < vdf.HLocs.Count; ++i)
-            {
-                HLoc hloc = vdf.HLocs[i];
-                Transform mountPoint = new GameObject(hloc.Label).transform;
-                mountPoint.parent = thirdPerson.transform;
-                mountPoint.localRotation = Quaternion.LookRotation(hloc.Forward, hloc.Up);
-                mountPoint.localPosition = hloc.Position;
-                weaponMountTransforms[i] = mountPoint;
-            }
-
-            Dictionary<string, GameObject> partDict = new Dictionary<string, GameObject>();
-            for (int i = 0; i < vdf.PartsThirdPerson.Count; ++i)
-            {
-                GameObject healthObject = new GameObject("Health " + i);
-                healthObject.transform.SetParent(thirdPerson.transform);
-                ImportCarParts(partDict, healthObject, vtf, vdf.PartsThirdPerson[i], _noColliderPrefab, false, false, i);
-                if (i != 0)
+                foreach (VLoc vLoc in vdf.VLocs)
                 {
-                    healthObject.SetActive(false);
-                }
-            }
-
-            GameObject chassisCollider = new GameObject("ChassisColliders");
-            chassisCollider.transform.parent = root.transform;
-            ImportCarParts(partDict, chassisCollider, vtf, vdf.PartsThirdPerson[0], _carBodyPrefab, true);
-
-            for (int i = 0; i < vcf.Weapons.Count; ++i)
-            {
-                VcfWeapon weapon = vcf.Weapons[i];
-                if (weapon.MountPoint < 0 || weapon.MountPoint >= vdf.HLocs.Count)
-                {
-                    Debug.LogWarning("Turret '" + filename + "': weapon mount point " + weapon.MountPoint + " does not exist.");
-                    continue;
+                    GameObject vlocGo = new GameObject("VLOC");
+                    vlocGo.transform.parent = root.transform;
+                    vlocGo.transform.localRotation = Quaternion.LookRotation(vLoc.Forward, vLoc.Up);
+                    vlocGo.transform.localPosition = vLoc.Position;
                 }
 
-                HLoc hloc = vdf.HLocs[weapon.MountPoint];
-                // The weapon mesh comes from the part set that matches the hardpoint type, as for vehicles.
-                // vxturret.vdf has a single hardpoint of type Top.
-                SdfPart[] partsArray;
-                switch (hloc.MeshType)
+                GameObject chassis = new GameObject("Chassis");
+                chassis.transform.parent = root.transform;
+
+                GameObject thirdPerson = new GameObject("ThirdPerson");
+                thirdPerson.transform.parent = chassis.transform;
+
+                Transform[] weaponMountTransforms = new Transform[vdf.HLocs.Count];
+                for (int i = 0; i < vdf.HLocs.Count; ++i)
                 {
-                    case HardpointMeshType.Top: partsArray = weapon.Gdf.TopParts; break;
-                    case HardpointMeshType.Side: partsArray = weapon.Gdf.SideParts; break;
-                    case HardpointMeshType.Inside: partsArray = weapon.Gdf.InsideParts; break;
-                    case HardpointMeshType.Turret: partsArray = weapon.Gdf.TurretParts; break;
-                    default: partsArray = null; break;
+                    HLoc hloc = vdf.HLocs[i];
+                    Transform mountPoint = new GameObject(hloc.Label).transform;
+                    mountPoint.parent = thirdPerson.transform;
+                    mountPoint.localRotation = Quaternion.LookRotation(hloc.Forward, hloc.Up);
+                    mountPoint.localPosition = hloc.Position;
+                    weaponMountTransforms[i] = mountPoint;
                 }
 
-                if (partsArray == null)
+                Dictionary<string, GameObject> partDict = new Dictionary<string, GameObject>();
+                for (int i = 0; i < vdf.PartsThirdPerson.Count; ++i)
                 {
-                    Debug.LogWarning("Turret '" + filename + "': weapon '" + weapon.GdfFilename + "' has no mesh for hardpoint type " + hloc.MeshType + ".");
-                    continue;
+                    GameObject healthObject = new GameObject("Health " + i);
+                    healthObject.transform.SetParent(thirdPerson.transform);
+                    ImportCarParts(partDict, healthObject, vtf, vdf.PartsThirdPerson[i], _noColliderPrefab, false, false, i);
+                    if (i != 0)
+                    {
+                        healthObject.SetActive(false);
+                    }
                 }
 
-                Transform weaponTransform = new GameObject(weapon.Gdf.Name).transform;
-                weaponTransform.SetParent(weaponMountTransforms[weapon.MountPoint]);
-                weaponTransform.localPosition = Vector3.zero;
-                weaponTransform.localRotation = Quaternion.identity;
-                ImportCarParts(partDict, weaponTransform.gameObject, vtf, partsArray, _noColliderPrefab, false);
-                weapon.Transform = weaponTransform;
+                GameObject chassisCollider = new GameObject("ChassisColliders");
+                chassisCollider.transform.parent = root.transform;
+                ImportCarParts(partDict, chassisCollider, vtf, vdf.PartsThirdPerson[0], _carBodyPrefab, true);
+
+                for (int i = 0; i < vcf.Weapons.Count; ++i)
+                {
+                    VcfWeapon weapon = vcf.Weapons[i];
+                    if (weapon.MountPoint < 0 || weapon.MountPoint >= vdf.HLocs.Count)
+                    {
+                        Debug.LogWarning("Turret '" + filename + "': weapon mount point " + weapon.MountPoint + " does not exist.");
+                        continue;
+                    }
+
+                    HLoc hloc = vdf.HLocs[weapon.MountPoint];
+                    // The weapon mesh comes from the part set that matches the hardpoint type, as for vehicles.
+                    // vxturret.vdf has a single hardpoint of type Top.
+                    SdfPart[] partsArray;
+                    switch (hloc.MeshType)
+                    {
+                        case HardpointMeshType.Top: partsArray = weapon.Gdf.TopParts; break;
+                        case HardpointMeshType.Side: partsArray = weapon.Gdf.SideParts; break;
+                        case HardpointMeshType.Inside: partsArray = weapon.Gdf.InsideParts; break;
+                        case HardpointMeshType.Turret: partsArray = weapon.Gdf.TurretParts; break;
+                        default: partsArray = null; break;
+                    }
+
+                    if (partsArray == null)
+                    {
+                        Debug.LogWarning("Turret '" + filename + "': weapon '" + weapon.GdfFilename + "' has no mesh for hardpoint type " + hloc.MeshType + ".");
+                        continue;
+                    }
+
+                    Transform weaponTransform = new GameObject(weapon.Gdf.Name).transform;
+                    weaponTransform.SetParent(weaponMountTransforms[weapon.MountPoint]);
+                    weaponTransform.localPosition = Vector3.zero;
+                    weaponTransform.localRotation = Quaternion.identity;
+                    ImportCarParts(partDict, weaponTransform.gameObject, vtf, partsArray, _noColliderPrefab, false);
+                    weapon.Transform = weaponTransform;
+                }
+
+                turret.Configure(vdf, vcf, thirdPerson.transform);
+                return root;
             }
-
-            turret.Configure(vdf, vcf, thirdPerson.transform);
-            return root;
+            catch
+            {
+                UnityEngine.Object.Destroy(root);
+                throw;
+            }
         }
 
         private RaySusp[] CreateWheelPair(Dictionary<string, GameObject> partDict, string placement, int wheelIndex, GameObject car, Vdf vdf, Vtf vtf, Wdf wheelDef)
