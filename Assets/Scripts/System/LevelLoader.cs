@@ -118,16 +118,16 @@ namespace Assets.Scripts.System
                         try
                         {
                             GameObject go = null;
-                            // Skip any object that is not a car or special and has no .sdf model file, instead of failing the
-                            // whole level. In practice these are the turrets (vehicle files such as mg1turr.vcf), which the
-                            // vehicle loader does not understand yet.
+                            // Skip any other object that has no .sdf model file, instead of failing the whole level.
+                            // Turrets (class 8) have no .sdf, their model comes from a .vcf (for example mg1turr.vcf).
                             if (odef.ClassId != MsnMissionParser.ClassId.Car &&
                                 odef.ClassId != MsnMissionParser.ClassId.Special &&
+                                odef.ClassId != MsnMissionParser.ClassId.Turret &&
                                 !VirtualFilesystem.Instance.FileExists(odef.Label + ".sdf"))
                             {
                                 if (SkippedObjects.Add(odef.Label.ToLower()))
                                 {
-                                    Debug.LogWarning("No model file for object '" + odef.Label + "', skipping it (turrets are not supported yet).");
+                                    Debug.LogWarning("No model file for object '" + odef.Label + "' (class " + (uint)odef.ClassId + "), skipping it.");
                                 }
 
                                 continue;
@@ -171,6 +171,14 @@ namespace Assets.Scripts.System
                                     CameraManager.Instance.MainCamera.GetComponent<SmoothFollow>().Target = go.transform;
                                     go.AddComponent<CarInput>();
                                 }
+                            }
+                            else if (odef.ClassId == MsnMissionParser.ClassId.Turret)
+                            {
+                                go = _cacheManager.ImportTurret(odef.Label + ".vcf", out _);
+                                go.GetComponent<Turret>().TeamId = odef.TeamId;
+                                go.transform.parent = patchGameObject.transform;
+                                go.transform.localPosition = odef.LocalPosition;
+                                go.transform.localRotation = odef.LocalRotation;
                             }
                             else if (odef.ClassId != MsnMissionParser.ClassId.Special)
                             {

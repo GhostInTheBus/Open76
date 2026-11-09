@@ -507,6 +507,12 @@ namespace Assets.Scripts.System
                             return car.Attacked ? 1 : 0;
                         }
 
+                        Turret turret = entity.Object != null ? entity.Object.GetComponent<Turret>() : null;
+                        if (turret != null)
+                        {
+                            return turret.Attacked ? 1 : 0;
+                        }
+
                         LogUnhandledEntity(actionName, entityIndex, entity, machine);
                     }
                     break;

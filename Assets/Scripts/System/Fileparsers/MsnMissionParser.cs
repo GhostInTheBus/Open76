@@ -18,6 +18,7 @@ namespace Assets.Scripts.System.Fileparsers
             Struct1 = 2,
             Struct2 = 3,
             Sign = 4,
+            Turret = 8,
             Special = 9,
             Ramp = 11,
             Intersection = 80
