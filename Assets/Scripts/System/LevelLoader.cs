@@ -205,6 +205,9 @@ namespace Assets.Scripts.System
                                 if (mdef.FSM != null)
                                 {
                                     FSMEntity[] entities = mdef.FSM.EntityTable;
+                                    // A mission can list the same object more than once (T17 lists the player's car as entities 0 and 1,
+                                    // and scripts use both), so every matching entry gets the object, not just the first.
+                                    bool firstMatch = true;
                                     for (int i = 0; i < entities.Length; ++i)
                                     {
                                         if (entities[i].Value == odef.Label && entities[i].Id == odef.Id)
@@ -213,11 +216,14 @@ namespace Assets.Scripts.System
                                             if (worldEntity != null)
                                             {
                                                 entities[i].WorldEntity = worldEntity;
-                                                worldEntity.Id = i;
+                                                if (firstMatch)
+                                                {
+                                                    worldEntity.Id = i;
+                                                }
                                             }
-                                        
+
                                             entities[i].Object = go;
-                                            break;
+                                            firstMatch = false;
                                         }
                                     }
                                 }
