@@ -259,6 +259,31 @@ namespace Assets.Scripts.System
                         LogUnhandledEntity(actionName, entityIndex, entity, machine);
                     }
                     break;
+                case "evade":
+                case "race":
+                    {
+                        // In i76.exe evade (command 0x18) and race (0x1a) set the vehicle's path and speed exactly like goto and
+                        // take a fourth argument, the other entity involved, then issue their own command. Open76 only does the
+                        // path and speed part; the evasion and racing tactics themselves are not implemented.
+                        int entityIndex = args.Dequeue().Value;
+                        int pathIndex = args.Dequeue().Value;
+                        int targetSpeed = args.Dequeue().Value;
+                        args.Dequeue();
+
+                        FSMEntity entity = fsmRunner.FSM.EntityTable[entityIndex];
+                        FSMPath path = fsmRunner.FSM.Paths[pathIndex];
+
+                        Car car = CarOf(entity);
+                        if (car != null)
+                        {
+                            WarnOnce("partial:" + actionName, "FSM action '" + actionName + "' follows its path at its speed only; its own tactics are not implemented.");
+                            car.SetTargetPath(path, targetSpeed);
+                            break;
+                        }
+
+                        LogUnhandledEntity(actionName, entityIndex, entity, machine);
+                    }
+                    break;
                 case "isWithinNav":
                     {
                         int pathIndex = args.Dequeue().Value;
