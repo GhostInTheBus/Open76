@@ -575,6 +575,15 @@ namespace Assets.Scripts.System
                     int timerIndex = args.Dequeue().Value;
                     fsmRunner.Timers[timerIndex] = Time.unscaledTime;
                     break;
+                case "failAllObj":
+                    {
+                        // Fails the mission after a delay with failure message number n (i76.exe: same family as failAll
+                        // and successAll, which set the same deadline and the mission result).
+                        int delay = args.Dequeue().Value;
+                        int messageNumber = args.Dequeue().Value;
+                        fsmRunner.FailMission(delay, messageNumber);
+                    }
+                    break;
                 // The four actions below follow what i76.exe does (see Projects/Dev/Interstate 76 Gaps in the vault).
                 case "destroy":
                     {

@@ -22,6 +22,18 @@ namespace Assets.Scripts.System
 
         public float[] Timers { get; set; }
 
+        // failAllObj in i76.exe sets a deadline (now + delay) and a failure message number; when the clock passes the
+        // deadline the mission ends in failure. A later call replaces an earlier one.
+        private float _missionEndAt = -1f;
+        private int _missionFailMessage;
+        private bool _missionEnded;
+
+        public void FailMission(float delaySeconds, int messageNumber)
+        {
+            _missionEndAt = Time.time + delaySeconds;
+            _missionFailMessage = messageNumber;
+        }
+
         public FSM FSM;
         private FSMActionDelegator _actionDelegator;
         
@@ -54,6 +66,21 @@ namespace Assets.Scripts.System
         {
             if (FSM == null)
             {
+                return;
+            }
+
+            if (_missionEndAt >= 0f && !_missionEnded && Time.time >= _missionEndAt)
+            {
+                // The original shows the failure text from the mission's "(failure)" list and ends the mission.
+                // Open76 does not read that list yet, so it logs the message number and returns to the main menu.
+                _missionEnded = true;
+                Debug.Log("[Mission] failed (failure message " + _missionFailMessage + ")");
+                Assets.Scripts.Menus.MenuController menu = FindFirstObjectByType<Assets.Scripts.Menus.MenuController>();
+                if (menu != null)
+                {
+                    menu.AbortMission();
+                }
+
                 return;
             }
 
