@@ -475,7 +475,17 @@ namespace Assets.Scripts.System
                         MeshRenderer weaponRenderer = weaponTransform.GetComponentInChildren<MeshRenderer>();
                         if (weaponRenderer != null)
                         {
-                            weaponRenderer.sharedMaterial.shader = Shader.Find("Custom/CutOutWithoutZ");
+                            // Shader.Find only works for shaders that are in the build (here: under Resources).
+                            // Assigning null would turn the part magenta.
+                            Shader noZShader = Shader.Find("Custom/CutOutWithoutZ");
+                            if (noZShader != null)
+                            {
+                                weaponRenderer.sharedMaterial.shader = noZShader;
+                            }
+                            else
+                            {
+                                Debug.LogWarning("Shader 'Custom/CutOutWithoutZ' is missing from the build.");
+                            }
                         }
                     }
                 }
