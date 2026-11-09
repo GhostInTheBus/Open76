@@ -113,8 +113,12 @@ namespace Assets.Scripts.System.Fileparsers
                     vdf.EltFile = br.ReadCString(13);
                 }
 
-                br.FindNext("SOBJ");
-                vdf.SOBJGeoName = br.ReadCString(8);
+                // Cars have an SOBJ chunk, turrets and a few trailers (vxturret, vxcargo, vxtanker, varmdilo) do not.
+                // Searching for a chunk that is not there would leave the reader at a garbage position.
+                if (br.TryFindNext("SOBJ"))
+                {
+                    vdf.SOBJGeoName = br.ReadCString(8);
+                }
 
                 vdf.VLocs = new List<VLoc>();
                 br.FindNext("VLOC");
