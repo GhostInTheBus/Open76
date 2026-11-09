@@ -10,6 +10,8 @@ namespace Assets.Scripts
     //   -i76mission m01.msn    jump straight into a mission
     //   -i76screenshot out.png save a screenshot after the level settles, then quit
     //   -i76delay 20           seconds to wait before the screenshot (default 20)
+    //   -i76lookat name        before the screenshot, put the camera near the first object whose name starts with
+    //                          'name' (case insensitive) and point it at it
     //   -i76mute               silence all audio
     public class DevArgs : MonoBehaviour
     {
@@ -20,6 +22,7 @@ namespace Assets.Scripts
         private static string _shotPath;
         private static float _chaosSeconds;
         private static bool _deathCam;
+        private static string _lookAt;
         private static volatile int _lastFrame;
         private static float _lastFrameRealtime;
 
@@ -40,6 +43,7 @@ namespace Assets.Scripts
                 else if (args[i] == "-i76aborttest") _abortTest = true;
                 else if (args[i] == "-i76deathcam") _deathCam = true;
                 else if (i < args.Length - 1 && args[i] == "-i76chaos") float.TryParse(args[i + 1], out _chaosSeconds);
+                else if (i < args.Length - 1 && args[i] == "-i76lookat") _lookAt = args[i + 1];
                 else if (i < args.Length - 1 && args[i] == "-i76mission") mission = args[i + 1];
                 else if (i < args.Length - 1 && args[i] == "-i76screenshot") shot = args[i + 1];
                 else if (i < args.Length - 1 && args[i] == "-i76delay") float.TryParse(args[i + 1], out delay);
@@ -122,11 +126,47 @@ namespace Assets.Scripts
                         Debug.Log("[Trace t=" + Time.realtimeSinceStartup.ToString("F1") + "] y=" + tc.transform.position.y.ToString("F1") + " pos=" + tc.transform.position + " vel=" + (trb != null ? trb.linearVelocity.ToString() : "-") + " grounded=" + grounded + " engine=" + tc.EngineRunning + " alive=" + tc.Alive + " mainCamActive=" + Assets.Scripts.Camera.CameraManager.Instance.IsMainCameraActive + " throttle=" + tc.GetComponent<Assets.Scripts.CarSystems.CarPhysics>().Throttle + " speed=" + (trb != null ? trb.linearVelocity.magnitude.ToString("F1") : "-") + " groundRayY=" + GroundY(tc.transform.position));
                     }
                 }
+                if (_lookAt != null)
+                {
+                    yield return LookAtObject(_lookAt);
+                }
+
                 Dump();
                 ScreenCapture.CaptureScreenshot(shot);
                 yield return new WaitForSecondsRealtime(3f);
                 Application.Quit();
             }
+        }
+
+        private static IEnumerator LookAtObject(string namePrefix)
+        {
+            Transform target = null;
+            foreach (Transform t in FindObjectsByType<Transform>(FindObjectsSortMode.None))
+            {
+                if (t.name.StartsWith(namePrefix, StringComparison.OrdinalIgnoreCase) && (target == null || string.CompareOrdinal(t.name, target.name) < 0))
+                {
+                    target = t;
+                }
+            }
+
+            UnityEngine.Camera cam = UnityEngine.Camera.main;
+            if (target == null || cam == null)
+            {
+                Debug.Log("[LookAt] no object starting with '" + namePrefix + "' or no main camera");
+                yield break;
+            }
+
+            // Stop the game's own camera scripts from moving the camera back.
+            foreach (MonoBehaviour behaviour in cam.GetComponents<MonoBehaviour>())
+            {
+                behaviour.enabled = false;
+            }
+
+            cam.transform.SetParent(null);
+            cam.transform.position = target.position + new Vector3(0f, 3f, 0f) - target.forward * 9f;
+            cam.transform.LookAt(target.position + Vector3.up * 1.5f);
+            Debug.Log("[LookAt] camera at " + cam.transform.position + " looking at " + target.name + " " + target.position);
+            yield return new WaitForSecondsRealtime(1f);
         }
 
         // Mission -> Esc menu -> Abort Mission -> main menu -> start another mission.
