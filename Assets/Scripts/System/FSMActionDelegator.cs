@@ -670,7 +670,9 @@ namespace Assets.Scripts.System
                     break;
                 case "allEnemyDead":
                     {
-                        // True when every vehicle on every team other than the entity's own (teams 1 to 6) is dead.
+                        // True when every vehicle on every team other than the entity's own (teams 1 to 7) is dead. i76.exe
+                        // (sub_409770) walks the team rosters, and its roster add (sub_408510) skips objects of type 8, the turret
+                        // class, so turrets never count. Open76 matches that by only looking at Cars.
                         int entityIndex = args.Dequeue().Value;
                         FSMEntity entity = fsmRunner.FSM.EntityTable[entityIndex];
                         if (entity.Object == null)
@@ -690,7 +692,7 @@ namespace Assets.Scripts.System
                         int team = self != null ? self.TeamId : selfTurret.TeamId;
                         foreach (Car other in EntityManager.Instance.Cars)
                         {
-                            if (other.TeamId >= 1 && other.TeamId <= 6 && other.TeamId != team && other.Alive)
+                            if (other.TeamId >= 1 && other.TeamId <= 7 && other.TeamId != team && other.Alive)
                             {
                                 return 0;
                             }
