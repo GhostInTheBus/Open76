@@ -315,7 +315,7 @@ namespace Assets.Scripts.System
                         Car car = CarOf(entity);
                         if (car != null)
                         {
-                            bool within = car.IsWithinNav(path, (int)Mathf.Sqrt(distance));
+                            bool within = car.IsWithinNavSquare(path, distance);
                             return within ? 1 : 0;
                         }
 
